@@ -55,11 +55,12 @@
 #include <pwd.h>
 
 // For USB HID version
-#include "hidapi/hidapi.h"
+#include "hidapi.h"
 #include <stdio.h>
 #include <wchar.h>
 #include <string.h>
 #include <stdlib.h>
+#include "hidapi.h"
 
 
 
@@ -67,7 +68,7 @@
 //#define DELAY /// To test delay
 //#define PWM        // For PWM from DAQ, do not use with USB
 //#define SAVE_LOG
-//#define ALUHAPTICS
+#define ALUHAPTICS
 
 #ifndef USB
 #define SENSORAY
@@ -1063,6 +1064,7 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
 
     // store new position values
     a_position.set(x, y, z);
+    latest_position = a_position;
 
 #ifdef SAVE_LOG
     positions.push_back(a_position);
@@ -1280,6 +1282,7 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
     */
     ////////////////////////////////////////////////////////////////////////////
 
+    latest_force = a_force;
 
 
 
@@ -1404,6 +1407,8 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
     motorTorque[2] = -motorTorque[2];
 #endif
 
+    latest_motor_torques = cVector3d(motorTorque[0],motorTorque[1],motorTorque[2]);
+
 
     // Set motor torque (t)
     double torque_constant[] = { m_config.torque_constant_motor_a, 
@@ -1430,7 +1435,7 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
 #ifdef USB
         if(motorAmpere>3) motorAmpere = 3;
         if(motorAmpere<-3) motorAmpere = -3;
-        // 90 % = 3 A set in microcontroller. Escon configured as 90% = 1A.
+        // 90 % = 3 A set in microcontroller. Escon configured as 90% = 3A.
        signalToSend[i] = short(motorAmpere*1000);
 #endif
 

@@ -43,6 +43,7 @@
 
 //------------------------------------------------------------------------------
 #include "chai3d.h"
+#include "devices/CWoodenDevice.h"
 //------------------------------------------------------------------------------
 #include <GLFW/glfw3.h>
 //------------------------------------------------------------------------------
@@ -572,6 +573,20 @@ void updateGraphics(void)
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
+
+
+
+    /////////////////////////////////////////////////////////////////////
+    // WOODENHAPTICS DEBUG INFO
+    /////////////////////////////////////////////////////////////////////
+    std::cout << "hej" << std::endl;
+    if(cWoodenDevice* w = dynamic_cast<cWoodenDevice*>(hapticDevice.get())){
+        cWoodenDevice::woodenhaptics_status s = w->getStatus();
+        std::cout << s.toJSON() << std::endl;
+    }
+
+
+
 
 
     /////////////////////////////////////////////////////////////////////

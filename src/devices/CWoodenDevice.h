@@ -48,7 +48,7 @@
 #if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
 #include "devices/CGenericHapticDevice.h"
-#include "hidapi/hidapi.h"
+#include "hidapi.h"
 #include <chrono>
 #include <thread>
 #include <vector>
@@ -163,7 +163,6 @@ class cWoodenDevice : public cGenericHapticDevice
     //--------------------------------------------------------------------------
 
 public:
-
     //! Constructor of cWoodenDevice.
     cWoodenDevice(unsigned int a_deviceNumber = 0);
 
@@ -266,6 +265,8 @@ public:
           cpr_encoder_c(k[19]), max_linear_force(k[20]), max_linear_stiffness(k[21]), 
           max_linear_damping(k[22]), mass_body_b(k[23]), mass_body_c(k[24]), 
           length_cm_body_b(k[25]), length_cm_body_c(k[26]), g_constant(k[27]){}
+
+        configuration(){}
     };
 
 
@@ -295,6 +296,9 @@ protected:
 
     hid_to_pc_message hid_to_pc;
     pc_to_hid_message pc_to_hid;
+    cVector3d latest_position;
+    cVector3d latest_force;
+    cVector3d latest_motor_torques;
 
     std::chrono::steady_clock::time_point start;
     std::chrono::steady_clock::time_point start_of_app;
@@ -316,6 +320,105 @@ protected:
     hid_device *handle;
     int i;
     struct hid_device_info *devs, *cur_dev;
+
+
+public:
+
+
+
+
+    struct woodenhaptics_status {
+        hid_to_pc_message latest_hid_to_pc;
+        pc_to_hid_message latest_pc_to_hid;
+        configuration config;
+        cVector3d latest_position;
+        cVector3d latest_force;
+        cVector3d latest_motor_torques;
+
+
+        std::string toJSON(const cVector3d& v){
+            std::stringstream ss;
+            ss << "[" << v.x() << ", " << v.y() << ", " << v.z() << "]" << std::endl;
+            return ss.str();
+         }
+
+        std::string j(const std::string& key, const double& value){
+           std::stringstream s;
+           s << "    \"" << key << "\":";
+           while(s.str().length()<32) s<< " ";
+           s << value << "," << std::endl;
+           return s.str();
+        }
+
+
+        std::string config_toJSON(const cWoodenDevice::configuration& c){
+           using namespace std;
+           stringstream json;
+           json << "{" << endl
+                << j("diameter_capstan_a",c.diameter_capstan_a)
+                << j("diameter_capstan_b",c.diameter_capstan_b)
+                << j("diameter_capstan_c",c.diameter_capstan_c)
+                << j("length_body_a",c.length_body_a)
+                << j("length_body_b",c.length_body_b)
+                << j("length_body_c",c.length_body_c)
+                << j("diameter_body_a",c.diameter_body_a)
+                << j("diameter_body_b",c.diameter_body_b)
+                << j("diameter_body_c",c.diameter_body_c)
+                << j("workspace_origin_x",c.workspace_origin_x)
+                << j("workspace_origin_y",c.workspace_origin_y)
+                << j("workspace_origin_z",c.workspace_origin_z)
+                << j("workspace_radius",c.workspace_radius)
+                << j("torque_constant_motor_a",c.torque_constant_motor_a)
+                << j("torque_constant_motor_b",c.torque_constant_motor_b)
+                << j("torque_constant_motor_c",c.torque_constant_motor_c)
+                << j("current_for_10_v_signal",c.current_for_10_v_signal)
+                << j("cpr_encoder_a",c.cpr_encoder_a)
+                << j("cpr_encoder_b",c.cpr_encoder_b)
+                << j("cpr_encoder_c",c.cpr_encoder_c)
+                << j("max_linear_force",c.max_linear_force)
+                << j("max_linear_stiffness",c.max_linear_stiffness)
+                << j("max_linear_damping",c.max_linear_damping)
+                << j("mass_body_b",c.mass_body_b)
+                << j("mass_body_c",c.mass_body_c)
+                << j("length_cm_body_b",c.length_cm_body_b)
+                << j("length_cm_body_c",c.length_cm_body_c)
+                << j("g_constant",c.g_constant)
+                << "}" << endl;
+           return json.str();
+        }
+
+        std::string toJSON() {
+            std::stringstream ss;
+            ss << "{" << std::endl <<
+                "  'latest_position':  " << toJSON(latest_position) << "," << std::endl <<
+                "  'latest_force':  "    << toJSON(latest_force)<< "," << std::endl <<
+                "  'latest_motor_torques':  " << toJSON(latest_motor_torques) << "," << std::endl <<
+                "  'latest_hid_to_pc_encoder_a':  " << latest_hid_to_pc.encoder_a << "," << std::endl <<
+                "  'latest_hid_to_pc_encoder_b':  " << latest_hid_to_pc.encoder_b << "," << std::endl <<
+                "  'latest_hid_to_pc_encoder_c':  " << latest_hid_to_pc.encoder_c << "," << std::endl <<
+                "  'latest_pc_to_hid_motor_a_mA':  " << latest_pc_to_hid.current_motor_a_mA << "," << std::endl <<
+                "  'latest_pc_to_hid_motor_b_mA':  " << latest_pc_to_hid.current_motor_b_mA << "," << std::endl <<
+                "  'latest_pc_to_hid_motor_c_mA':  " << latest_pc_to_hid.current_motor_c_mA << "," << std::endl;
+
+            ss << "  'configuration: " << std::endl << config_toJSON(config);
+
+            ss << "}" << std::endl;
+
+            ss << "";
+
+            return ss.str();
+        }
+    };
+
+    woodenhaptics_status getStatus() {
+        woodenhaptics_status s;
+        s.latest_hid_to_pc = hid_to_pc;
+        s.latest_pc_to_hid = pc_to_hid;
+        s.config = m_config;
+        s.latest_position = latest_position;
+        s.latest_force = latest_force;
+        s.latest_motor_torques = latest_motor_torques;
+    }
 };
 
 //------------------------------------------------------------------------------
