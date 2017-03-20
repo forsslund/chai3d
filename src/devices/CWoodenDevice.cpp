@@ -68,7 +68,6 @@
 //#define DELAY /// To test delay
 //#define PWM        // For PWM from DAQ, do not use with USB
 //#define SAVE_LOG
-#define ALUHAPTICS
 
 #ifndef USB
 #define SENSORAY
@@ -135,7 +134,7 @@ std::string toJSON(const woodenhaptics_message& m) {
 //==============================================================================
 
 cWoodenDevice::configuration default_woody(){
-    double data[] = { 0.010, 0.010, 0.010, 
+    double data[] = { 0, 0.010, 0.010, 0.010,
                       0.080, 0.205, 0.245,
                       0.160, 0.120, 0.120,
                       0.220, 0.000, 0.080, 0.100, 
@@ -152,7 +151,8 @@ double v(const std::string& json, const std::string& key){
 
 cWoodenDevice::configuration fromJSON(std::string json){
     double d[]= {
-        v(json,"diameter_capstan_a"),      
+        v(json,"variant"),
+        v(json,"diameter_capstan_a"),
         v(json,"diameter_capstan_b"),      
         v(json,"diameter_capstan_c"),      
         v(json,"length_body_a"),           
@@ -195,6 +195,7 @@ std::string toJSON(const cWoodenDevice::configuration& c){
    using namespace std;
    stringstream json;
    json << "{" << endl
+        << j("variant",c.variant)
         << j("diameter_capstan_a",c.diameter_capstan_a)
         << j("diameter_capstan_b",c.diameter_capstan_b)
         << j("diameter_capstan_c",c.diameter_capstan_c)
@@ -826,11 +827,11 @@ pose calculate_pose(const cWoodenDevice::configuration& c, double* encoder_value
         dofAngle[i] = -getMotorAngle(i,cpr[i]) / gearRatio[i];
 #endif
 
-#ifdef ALUHAPTICS
-    dofAngle[0] = -dofAngle[0];
-    dofAngle[1] = dofAngle[1];
-    dofAngle[2] = dofAngle[2];
-#endif
+    if(int(c.variant) == 1){ // ALUHAPTICS
+        dofAngle[0] = -dofAngle[0];
+        dofAngle[1] = dofAngle[1];
+        dofAngle[2] = dofAngle[2];
+    }
 
     // Calculate dof angles (theta) for each body
     p.Ln = c.length_body_a; 
@@ -1017,11 +1018,11 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
 
 
     // Mike edition
-#ifdef ALUHAPTICS
-    tB = tB + 3.141592/2;
-#else
-    tC = -tC + 3.141592/2;
-#endif
+    if(int(m_config.variant) == 1) // ALUHAPTICS
+        tB = tB + 3.141592/2;
+    else
+        tC = -tC + 3.141592/2;
+
     x = cos(tA)*(Lb*sin(tB)+Lc*sin(tC))    - m_config.workspace_origin_x;
     y = sin(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_y;
     z = Ln+Lb*cos(tB)-Lc*cos(tC) - m_config.workspace_origin_z;
@@ -1335,11 +1336,11 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
     //z = Ln+Lb*cos(tB)-Lc*cos(tC) - m_config.workspace_origin_z;
 
      // Mike edition
-#ifdef ALUHAPTICS
+if(int(m_config.variant) == 1) // ALUHAPTICS
     tB = tB + 3.141592/2;
-#else
+else
     tC = -tC + 3.141592/2;
-#endif
+
 
 
 
@@ -1401,11 +1402,11 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
             -t.z() * m_config.diameter_capstan_c / m_config.diameter_body_c }; // switched sign 2016-05-30
 
 
-#ifdef ALUHAPTICS
+if(int(m_config.variant) == 1){ // ALUHAPTICS
     motorTorque[0] = motorTorque[0];
     motorTorque[1] = motorTorque[1];
     motorTorque[2] = -motorTorque[2];
-#endif
+}
 
     latest_motor_torques = cVector3d(motorTorque[0],motorTorque[1],motorTorque[2]);
 

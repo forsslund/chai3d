@@ -223,6 +223,7 @@ public:
 
     //! A collection of variables that can be set in ~/wooden_haptics.json 
     struct configuration {
+        double variant;                 // 0=WoodenHaptics default, 1=AluHaptics
         double diameter_capstan_a;      // m
         double diameter_capstan_b;      // m
         double diameter_capstan_c;      // m
@@ -251,20 +252,21 @@ public:
         double length_cm_body_b;        // m     distance to center of mass  
         double length_cm_body_c;        // m     from previous body
         double g_constant;              // m/s^2 usually 9.81 or 0 to 
-                                              //       disable gravity compensation
+                                        //       disable gravity compensation
 
         // Set values
         configuration(const double* k):
-          diameter_capstan_a(k[0]), diameter_capstan_b(k[1]), diameter_capstan_c(k[2]),
-          length_body_a(k[3]), length_body_b(k[4]), length_body_c(k[5]),
-          diameter_body_a(k[6]), diameter_body_b(k[7]), diameter_body_c(k[8]), 
-          workspace_origin_x(k[9]), workspace_origin_y(k[10]), workspace_origin_z(k[11]), 
-          workspace_radius(k[12]), torque_constant_motor_a(k[13]), 
-          torque_constant_motor_b(k[14]), torque_constant_motor_c(k[15]), 
-          current_for_10_v_signal(k[16]), cpr_encoder_a(k[17]), cpr_encoder_b(k[18]), 
-          cpr_encoder_c(k[19]), max_linear_force(k[20]), max_linear_stiffness(k[21]), 
-          max_linear_damping(k[22]), mass_body_b(k[23]), mass_body_c(k[24]), 
-          length_cm_body_b(k[25]), length_cm_body_c(k[26]), g_constant(k[27]){}
+          variant(k[0]),
+          diameter_capstan_a(k[1]), diameter_capstan_b(k[2]), diameter_capstan_c(k[3]),
+          length_body_a(k[4]), length_body_b(k[5]), length_body_c(k[6]),
+          diameter_body_a(k[7]), diameter_body_b(k[8]), diameter_body_c(k[9]),
+          workspace_origin_x(k[10]), workspace_origin_y(k[11]), workspace_origin_z(k[12]),
+          workspace_radius(k[13]), torque_constant_motor_a(k[14]),
+          torque_constant_motor_b(k[15]), torque_constant_motor_c(k[16]),
+          current_for_10_v_signal(k[17]), cpr_encoder_a(k[18]), cpr_encoder_b(k[19]),
+          cpr_encoder_c(k[20]), max_linear_force(k[21]), max_linear_stiffness(k[22]),
+          max_linear_damping(k[23]), mass_body_b(k[24]), mass_body_c(k[25]),
+          length_cm_body_b(k[26]), length_cm_body_c(k[27]), g_constant(k[28]){}
 
         configuration(){}
     };
