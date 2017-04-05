@@ -68,6 +68,7 @@
 //#define DELAY /// To test delay
 //#define PWM        // For PWM from DAQ, do not use with USB
 //#define SAVE_LOG
+//#define SERIAL  // for reading the orientation
 
 #ifndef USB
 #define SENSORAY
@@ -78,6 +79,20 @@
 #include <chrono>
 #include <thread>
 #include <ratio>
+
+
+
+
+#ifdef SERIAL
+#include <stdio.h>   /* Standard input/output definitions */
+#include <string.h>  /* String function definitions */
+#include <unistd.h>  /* UNIX standard function definitions */
+#include <fcntl.h>   /* File control definitions */
+#include <errno.h>   /* Error number definitions */
+#include <termios.h> /* POSIX terminal control definitions */
+
+#include <math/CQuaternion.h>
+#endif
 
 //------------------------------------------------------------------------------
 //#define C_ENABLE_WOODEN_DEVICE_SUPPORT
@@ -378,7 +393,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     m_specifications.m_sensedPosition                = true;
 
     // does your device provide sensed rotations (i.e stylus)?
-    m_specifications.m_sensedRotation                = false;
+    m_specifications.m_sensedRotation                = true;
 
     // does your device provide a gripper which can be sensed?
     m_specifications.m_sensedGripper                 = false;
@@ -580,6 +595,59 @@ bool cWoodenDevice::open()
     // ------------------------------------------------------
 #endif
 
+
+
+
+#ifdef SERIAL
+    fd = ::open("/dev/ttyACM0", O_RDONLY | O_NOCTTY);
+
+
+
+
+    /* *** Configure Port *** */
+    struct termios tty;
+    memset (&tty, 0, sizeof tty);
+
+    /* Error Handling */
+    if ( tcgetattr ( fd, &tty ) != 0 )
+    {
+    std::cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
+    }
+
+    /* Set Baud Rate */
+    cfsetospeed (&tty, B57600);
+    cfsetispeed (&tty, B57600);
+
+    /* Setting other Port Stuff */
+    /*
+    tty.c_cflag     &=  ~PARENB;        // Make 8n1
+    tty.c_cflag     &=  ~CSTOPB;
+    tty.c_cflag     &=  ~CSIZE;
+    tty.c_cflag     |=  CS8;
+    tty.c_cflag     &=  ~CRTSCTS;       // no flow control
+    tty.c_lflag     =   0;          // no signaling chars, no echo, no canonical processing
+    tty.c_oflag     =   0;                  // no remapping, no delays
+    tty.c_cc[VMIN]      =   0;                  // read doesn't block
+    tty.c_cc[VTIME]     =   5;                  // 0.5 seconds read timeout
+
+    tty.c_cflag     |=  CREAD | CLOCAL;     // turn on READ & ignore ctrl lines
+    tty.c_iflag     &=  ~(IXON | IXOFF | IXANY);// turn off s/w flow ctrl
+    tty.c_lflag     &=  ~(ICANON | ECHO | ECHOE | ISIG); // make raw
+    tty.c_oflag     &=  ~OPOST;              // make raw
+    */
+
+    /* Flush Port, then applies attributes */
+    tcflush( fd, TCIFLUSH );
+
+
+    if ( tcsetattr ( fd, TCSANOW, &tty ) != 0)
+    {
+    std::cout << "Error " << errno << " from tcsetattr" << std::endl;
+    }
+
+
+
+#endif
 
 
 
@@ -1071,6 +1139,9 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
 
     // store new position values
     a_position.set(x, y, z);
+#ifdef SERIAL
+    a_position.set(0, 0, 0);
+#endif
     latest_position = a_position;
 
 #ifdef SAVE_LOG
@@ -1126,13 +1197,80 @@ bool cWoodenDevice::getRotation(cMatrix3d& a_rotation)
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE BELLOW ACCORDINGLY ***
 
+
+
+
+
+
+
+
+
+#ifdef SERIAL
+    char buffer[320];
+    int n = read(fd, buffer, sizeof(buffer));
+    if (n < 0)
+       fputs("read failed!\n", stderr);
+    //std::cout << std::string(buffer) << std::endl;
+
+    using namespace std;
+    string s = string(buffer);
+    //s.split
+
+
+
+    //string s = "0.41,0.13,0.05,-0.90\n";
+    /*
+    istringstream sn (s);
+    string oneline;
+    while(!sn.eof()){
+
+        getline( sn, oneline, '\n' );  // try to read the next field into it
+    }
+    */
+    std::size_t last_end = s.rfind(']');
+    std::size_t last_start = s.rfind('[');
+    cout << s << endl;
+    cout << last_end << "  " << last_start << endl;
+    if(last_start >= 0 && last_end >= 0 && last_end > last_start){
+        string oneline = s.substr(last_start+1,last_end-last_start-1);
+
+        cout << "oneline: "  << oneline << endl;
+        istringstream ss( oneline );
+        double d[4]; int i=0;
+        while (!ss.eof())         // See the WARNING above for WHY we're doing this!
+        {
+          string x;               // here's a nice, empty string
+          getline( ss, x, ',' );  // try to read the next field into it
+          cout << x << endl;      // print it out, EVEN IF WE ALREADY HIT EOF
+          d[i++] = atof(x.c_str());
+          //cout << "double " << d << endl;
+          if(i>4) cout << "Much problem!" << endl;
+        }
+        if(i==4){
+            cQuaternion q(d[0],d[1],d[2],d[3]);
+            q.toRotMat(frame);
+            cout << "set " << d[0] << "  " << d[1] << "  " << d[2] << "  " << d[3] <<  endl;
+        } else
+            cout << "warning: i<4" << endl;
+    }
+
+#endif
+
+
+
+
+
+
+
     // if the device does not provide any rotation capabilities 
     // set the rotation matrix equal to the identity matrix.
+    /*
     r00 = 1.0;  r01 = 0.0;  r02 = 0.0;
     r10 = 0.0;  r11 = 1.0;  r12 = 0.0;
     r20 = 0.0;  r21 = 0.0;  r22 = 1.0;
 
     frame.set(r00, r01, r02, r10, r11, r12, r20, r21, r22);
+    */
 
     // store new rotation matrix
     a_rotation = frame;

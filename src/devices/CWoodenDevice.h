@@ -323,6 +323,9 @@ protected:
     int i;
     struct hid_device_info *devs, *cur_dev;
 
+    // for serial
+    int fd;
+
 
 public:
 
