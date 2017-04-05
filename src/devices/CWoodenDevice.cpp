@@ -80,7 +80,8 @@
 #include <ratio>
 
 //------------------------------------------------------------------------------
-#define C_ENABLE_WOODEN_DEVICE_SUPPORT
+//#define C_ENABLE_WOODEN_DEVICE_SUPPORT
+// Define in src/system/CGlobals.h !
 #if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
 
@@ -565,16 +566,17 @@ bool cWoodenDevice::open()
 
     // Open the device using the VID, PID,
     // and optionally the Serial number.
-    ////handle = hid_open(0x4d8, 0x3f, L"12345");
     handle = hid_open(0x1234, 0x6, NULL);
     if (!handle) {
-        printf("unable to open device\n");
-        return 1;
+        printf("unable to open device. Is it plugged in and you run as root?\n");
+        //return 1;
     }
     // Set the hid_read() function to be non-blocking.
-    hid_set_nonblocking(handle, 1);
+    if(handle)
+        hid_set_nonblocking(handle, 1);
 
-    std::cout << "Opened USB Connection" << std::endl;
+    if(handle)
+        std::cout << "Opened USB Connection" << std::endl;
     // ------------------------------------------------------
 #endif
 
@@ -673,8 +675,10 @@ bool cWoodenDevice::close()
 
 
     //close HID device
-    hid_close(handle);
-    hid_exit();
+    if(handle){
+        hid_close(handle);
+        hid_exit();
+    }
 
     // update status
     m_deviceReady = false;
@@ -959,26 +963,28 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
     };
     */
 
+    if(handle){
 
-    int res=0;
-    while (res == 0) {
-        res = hid_read(handle, buf, sizeof(buf));
-        if(res==8) // Got a correct message
-            //incoming_msg = *reinterpret_cast<woodenhaptics_message*>(buf);
-            hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(buf);
-        usleep(10);
-    }
+        int res=0;
+        while (res == 0) {
+            res = hid_read(handle, buf, sizeof(buf));
+            if(res==8) // Got a correct message
+                //incoming_msg = *reinterpret_cast<woodenhaptics_message*>(buf);
+                hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(buf);
+            usleep(10);
+        }
 
-    int flush=0;
-    while(int res2 = hid_read(handle, buf, sizeof(buf))){
-        if(res==8) // Got a correct message
-            //incoming_msg = *reinterpret_cast<woodenhaptics_message*>(buf);
-            hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(buf);
-        ++flush;
+        int flush=0;
+        while(int res2 = hid_read(handle, buf, sizeof(buf))){
+            if(res==8) // Got a correct message
+                //incoming_msg = *reinterpret_cast<woodenhaptics_message*>(buf);
+                hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(buf);
+            ++flush;
+        }
+        //if(flush)
+        //    std::cout << "Flushed " << flush << " messages." << std::endl;
+        lost_messages += flush;
     }
-    //if(flush)
-    //    std::cout << "Flushed " << flush << " messages." << std::endl;
-    lost_messages += flush;
 
 
     /*
@@ -1500,9 +1506,11 @@ if(int(m_config.variant) == 1){ // ALUHAPTICS
     for (int i = 1; i < 9; i++) {
         out_buf[i] = msg_buf[i-1];
     }
-    int error = hid_write(handle,out_buf,sizeof(out_buf));
-    if(error!=9){
-        std::cout << "hid_write return " << error << std::endl;
+    if(handle){
+        int error = hid_write(handle,out_buf,sizeof(out_buf));
+        if(error!=9){
+            std::cout << "hid_write return " << error << std::endl;
+        }
     }
 
     //usleep(20);

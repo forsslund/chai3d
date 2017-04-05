@@ -43,7 +43,9 @@
 
 //------------------------------------------------------------------------------
 #include "chai3d.h"
+#if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
 #include "devices/CWoodenDevice.h"
+#endif
 //------------------------------------------------------------------------------
 #include <GLFW/glfw3.h>
 //------------------------------------------------------------------------------
@@ -579,11 +581,13 @@ void updateGraphics(void)
     /////////////////////////////////////////////////////////////////////
     // WOODENHAPTICS DEBUG INFO
     /////////////////////////////////////////////////////////////////////
+#if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
     std::cout << "hej" << std::endl;
     if(cWoodenDevice* w = dynamic_cast<cWoodenDevice*>(hapticDevice.get())){
         cWoodenDevice::woodenhaptics_status s = w->getStatus();
         std::cout << s.toJSON() << std::endl;
     }
+#endif
 
 
 
