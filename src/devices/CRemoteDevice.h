@@ -45,9 +45,11 @@
 #ifndef CRemoteDeviceH
 #define CRemoteDeviceH
 //------------------------------------------------------------------------------
+#define C_ENABLE_REMOTE_DEVICE_SUPPORT
 #if defined(C_ENABLE_REMOTE_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
 #include "devices/CGenericHapticDevice.h"
+#include "../external/libremotehaptics/libremotehaptics.h"
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -188,6 +190,9 @@ protected:
 
     //! A short description of my variable
     int m_MyVariable;
+
+    Libremotehaptics rh;
+    bool isInitalized;
 };
 
 //------------------------------------------------------------------------------

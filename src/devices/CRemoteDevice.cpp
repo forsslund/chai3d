@@ -45,6 +45,7 @@
 //------------------------------------------------------------------------------
 #include "system/CGlobals.h"
 #include "devices/CRemoteDevice.h"
+#include <iostream>
 //------------------------------------------------------------------------------
 #if defined(C_ENABLE_REMOTE_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
@@ -95,13 +96,13 @@ cRemoteDevice::cRemoteDevice(unsigned int a_deviceNumber)
     //--------------------------------------------------------------------------
 
     // haptic device model (see file "CGenericHapticDevice.h")
-    m_specifications.m_model                         = C_HAPTIC_DEVICE_CUSTOM;
+    m_specifications.m_model                         = C_HAPTIC_DEVICE_REMOTE;
 
     // name of the device manufacturer, research lab, university.
-    m_specifications.m_manufacturerName              = "My Name";
+    m_specifications.m_manufacturerName              = "Forsslund Systems";
 
     // name of your device
-    m_specifications.m_modelName                     = "My Custom Device";
+    m_specifications.m_modelName                     = "Remote Haptic Device";
 
 
     //--------------------------------------------------------------------------
@@ -167,16 +168,16 @@ cRemoteDevice::cRemoteDevice(unsigned int a_deviceNumber)
     m_specifications.m_sensedRotation                = true;
 
     // does your device provide a gripper which can be sensed?
-    m_specifications.m_sensedGripper                 = true;
+    m_specifications.m_sensedGripper                 = false;
 
     // is you device actuated on the translation degrees of freedom?
     m_specifications.m_actuatedPosition              = true;
 
     // is your device actuated on the rotation degrees of freedom?
-    m_specifications.m_actuatedRotation              = true;
+    m_specifications.m_actuatedRotation              = false;
 
     // is the gripper of your device actuated?
-    m_specifications.m_actuatedGripper               = true;
+    m_specifications.m_actuatedGripper               = false;
 
     // can the device be used with the left hand?
     m_specifications.m_leftHand                      = true;
@@ -214,7 +215,7 @@ cRemoteDevice::cRemoteDevice(unsigned int a_deviceNumber)
     // *** INSERT YOUR CODE HERE ***
     m_MyVariable = 0;
 
-    m_deviceAvailable = false; // this value should become 'true' when the device is available.
+    m_deviceAvailable = true; // this value should become 'true' when the device is available.
 }
 
 
@@ -265,10 +266,16 @@ bool cRemoteDevice::open()
     */
     ////////////////////////////////////////////////////////////////////////////
 
-    bool result = C_ERROR; // this value will need to become "C_SUCCESS" for the device to be marked as ready.
+    bool result = true;//C_ERROR; // this value will need to become "C_SUCCESS" for the device to be marked as ready.
 
     // *** INSERT YOUR CODE HERE ***
     // result = openConnectionToMyDevice();
+
+    int port = 47111;
+    std::cout << "Open port " << port << " for Remote Haptics" << std::endl;
+    rh.init(port);
+
+    isInitalized = true;
 
 
     // update device status
@@ -389,7 +396,7 @@ unsigned int cRemoteDevice::getNumDevices()
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
 
-    int numberOfDevices = 0;  // At least set to 1 if a device is available.
+    int numberOfDevices = 1;  // At least set to 1 if a device is available.
 
     // numberOfDevices = getNumberOfDevicesConnectedToTheComputer();
 
@@ -429,16 +436,16 @@ bool cRemoteDevice::getPosition(cVector3d& a_position)
     ////////////////////////////////////////////////////////////////////////////
 
     bool result = C_SUCCESS;
-    double x,y,z;
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
 
-    x = 0.0;    // x = getMyDevicePositionX()
-    y = 0.0;    // y = getMyDevicePositionY()
-    z = 0.0;    // z = getMyDevicePositionZ()
+    // *** INSERT YOUR CODE HERE, MODIFY CODE BELLOW ACCORDINGLY ***
+    Libremotehaptics::Vector3d p;
+    rh.getPosition(p);
 
     // store new position values
-    a_position.set(x, y, z);
+    a_position.set(p.x, p.y, p.z);
+
 
     // estimate linear velocity
     estimateLinearVelocity(a_position);
@@ -494,9 +501,11 @@ bool cRemoteDevice::getRotation(cMatrix3d& a_rotation)
 
     // if the device does not provide any rotation capabilities 
     // set the rotation matrix equal to the identity matrix.
-    r00 = 1.0;  r01 = 0.0;  r02 = 0.0;
-    r10 = 0.0;  r11 = 1.0;  r12 = 0.0;
-    r20 = 0.0;  r21 = 0.0;  r22 = 1.0;
+    Libremotehaptics::RotationMatrix o;
+    rh.getOrientation(o);
+    r00 = o[0];  r01 = o[1];  r02 = o[2];
+    r10 = o[3];  r11 = o[4];  r12 = o[5];
+    r20 = o[6];  r21 = o[7];  r22 = o[8];
 
     frame.set(r00, r01, r02, r10, r11, r12, r20, r21, r22);
 
@@ -615,6 +624,12 @@ bool cRemoteDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
     // setForceToMyDevice(fx, fy, fz);
     // setTorqueToMyDevice(tx, ty, tz);
     // setForceToGripper(fg);
+
+    Libremotehaptics::Vector3d f;
+    f.x = fx;
+    f.y = fy;
+    f.z = fz;
+    rh.setForce(f);
 
 
     // exit
