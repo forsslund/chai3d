@@ -845,6 +845,9 @@ double getMotorAngle(int motor, double cpr) {
     uint reason;
     S826_CounterSnapshotRead(0,motor+3,&encoderValue,&ctstamp,&reason,0);
 
+    //if(motor==1)
+    //std::cout << "encoder value: "<< (motor+3) << " " << encoderValue << std::endl;
+
 
     //uint encoderValue2;
     //S826_CounterSnapshot(0,0);
@@ -896,7 +899,8 @@ pose calculate_pose(const cWoodenDevice::configuration& c, double* encoder_value
         dofAngle[i] = (2.0*pi*encoder_values[i]/cpr[i]) / gearRatio[i];
 #else
     for(int i=0;i<3;i++)
-        dofAngle[i] = -getMotorAngle(i,cpr[i]) / gearRatio[i];
+        dofAngle[i] = getMotorAngle(i,cpr[i]) / gearRatio[i];
+    dofAngle[0] = -dofAngle[0]; // 2016-04-25 sign switch
 #endif
 
     if(int(c.variant) == 1){ // ALUHAPTICS
@@ -955,36 +959,6 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
     // *** INSERT YOUR CODE HERE, MODIFY CODE BELLOW ACCORDINGLY ***
 #ifndef USB
     const pose p = calculate_pose(m_config,0);
-    const double& Ln = p.Ln;
-    const double& Lb = p.Lb; 
-    const double& Lc = p.Lc; 
-    const double& tA = p.tA; 
-    double tB = p.tB;
-    double tC = p.tC;
-
-    // Do forward kinematics (thetas -> xyz)
-    x = cos(tA)*(Lb*sin(tB)+Lc*cos(tB+tC))     - m_config.workspace_origin_x;
-    y = sin(tA)*(Lb*sin(tB)+Lc*cos(tB+tC))     - m_config.workspace_origin_y;
-    z = Ln + Lb*cos(tB) - Lc*sin(tB+tC)        - m_config.workspace_origin_z;
-
-
-    // Mike kinematics 2016-05-30
-    //std::cout << "Raw tA, tB, tC: " << deg(tA) << " " << deg(tB) << " " << deg(tC);
-
-    // we have to remove the false contribution from tB
-    //tC = tC+tB;
-
-    // according to figure is our usual "starting position" at 90' theta c
-    //tC = -tC+3.141592/2;
-    //tC = tC+3.141592/2;
-    tB = tB + 3.141592/2;
-
-    //std::cout << " Modified tA, tB, tC: "<< deg(tA) << " " << deg(tB) << " " << deg(tC) << std::endl;
-
-    x = cos(tA)*(Lb*sin(tB)+Lc*sin(tC))    - m_config.workspace_origin_x;
-    y = sin(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_y;
-    z = Ln+Lb*cos(tB)-Lc*cos(tC) - m_config.workspace_origin_z;
-
 #endif
 
 #ifdef USB
@@ -1076,6 +1050,9 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
     using namespace std;
     //cout << encoder_values[0] << ", " << encoder_values[1] << ", " << encoder_values[2] << endl;
     pose p  = calculate_pose(m_config, encoder_values);
+#endif
+
+
     const double& Ln = p.Ln;
     const double& Lb = p.Lb;
     const double& Lc = p.Lc;
@@ -1102,8 +1079,6 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
     z = Ln+Lb*cos(tB)-Lc*cos(tC) - m_config.workspace_origin_z;
 
 
-
-
 /*
     std::cout << " xyz "<< x << " " << y << " " << z << std::endl;
 
@@ -1121,14 +1096,6 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
     y = incoming_msg.position_y;
     z = incoming_msg.position_z;
 */
-
-
-
-
-
-
-
-#endif
 
 
 #ifdef DELAY
