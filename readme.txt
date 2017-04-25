@@ -8,7 +8,8 @@ Quick installation instructions:
  3. sudo apt install git
  4. git clone https://github.com/forsslund/chai3d.git
  5. sudo apt install libhidapi-dev libudev-dev libusb-1.0-0-dev libasound2-dev freeglut3-dev \
-    build-essential cmake libudev-dev libxcursor-dev libxrandr-dev libxinerama-dev
+    build-essential cmake libudev-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+    qt5-default 
  6. cd chai3d
  7. cmake .
  8. make -j5
