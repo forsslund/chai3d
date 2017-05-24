@@ -20,7 +20,7 @@
  code repository located at:
         http://github.com/signal11/hidapi .
 ********************************************************/
-
+#if defined(LINUX)
 /* C */
 #include <stdio.h>
 #include <string.h>
@@ -793,3 +793,4 @@ HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
 {
 	return NULL;
 }
+#endif

@@ -43,6 +43,12 @@
 
 //------------------------------------------------------------------------------
 #include "system/CGlobals.h"
+
+//------------------------------------------------------------------------------
+// Define in src/system/CGlobals.h !
+#if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
+//------------------------------------------------------------------------------
+
 #include "devices/CWoodenDevice.h"
 
 // Following includes are only used for reading/writing config file and to find 
@@ -94,11 +100,6 @@
 #include <math/CQuaternion.h>
 #endif
 
-//------------------------------------------------------------------------------
-//#define C_ENABLE_WOODEN_DEVICE_SUPPORT
-// Define in src/system/CGlobals.h !
-#if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
-//------------------------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////////////////////
 /*
