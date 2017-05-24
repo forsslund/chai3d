@@ -35,5 +35,5 @@ void Libremotehaptics::setTorque(Libremotehaptics::Vector3d &t)
 
 bool Libremotehaptics::getUserSwitch(int index)
 {
-    netHandler->getUserSwitch(index);
+    return netHandler->getUserSwitch(index);
 }
