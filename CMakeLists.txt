@@ -216,14 +216,17 @@ set (CHAI3D_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 # optional extras
 #
 #set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} `pkg-config libudev --libs` -lrt)
-set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/s826/lib" "${PROJECT_SOURCE_DIR}/external/libhid")
-link_directories ("${PROJECT_SOURCE_DIR}/external/s826/lib")
-set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} udev 826_64)
-#add_definitions(-DC_ENABLE_WOODEN_DEVICE_SUPPORT)
+if (${OS} MATCHES lin)
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/s826/lib" "${PROJECT_SOURCE_DIR}/external/libhid")
+    link_directories ("${PROJECT_SOURCE_DIR}/external/s826/lib")
+    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} udev 826_64)
+    #add_definitions(-DC_ENABLE_WOODEN_DEVICE_SUPPORT)
+endif ()
 
 # Remote
 set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/libremotehaptics" )
 link_directories ("${PROJECT_SOURCE_DIR}/external/libremotehaptics")
+set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/Qt58/5.8/msvc2015_64/lib/" )
 set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} remotehaptics Qt5Core Qt5Network)
 #add_definitions(-DC_ENABLE_REMOTE_DEVICE_SUPPORT)
 
