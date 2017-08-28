@@ -33,7 +33,7 @@
     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE. 
+    POSSIBILITY OF SUCH DAMAGE.
 
     \author    <http://www.chai3d.org>
     \author    Your name, institution, or company name.
@@ -54,6 +54,9 @@
 #include <vector>
 //------------------------------------------------------------------------------
 
+class Libremotehaptics;
+
+
 //------------------------------------------------------------------------------
 namespace chai3d {
 //------------------------------------------------------------------------------
@@ -63,7 +66,7 @@ namespace chai3d {
     \file       CWoodenDevice.h
 
     \brief
-    <b> Devices </b> \n 
+    <b> Devices </b> \n
     Custom Haptic Device (Template).
 */
 //==============================================================================
@@ -96,18 +99,30 @@ struct woodenhaptics_message {
 
 
 
-struct hid_to_pc_message { // 4*2 = 8 bytes
+struct hid_to_pc_message { // 9*2 = 18 bytes
     short encoder_a;
     short encoder_b;
     short encoder_c;
-    short debug;
+    short encoder_pen_a;
+    short encoder_pen_b;
+    short encoder_pen_c;
+    unsigned short debug;
+    unsigned short latency;
+    unsigned short version;
 };
 
-struct pc_to_hid_message {  // 4*2 = 8 bytes
+
+
+struct pc_to_hid_message {  // 9*2 = 18 bytes
     short current_motor_a_mA;
     short current_motor_b_mA;
     short current_motor_c_mA;
-    short debug;
+    short force_motor_a_N;
+    short force_motor_b_N;
+    short force_motor_c_N;
+    unsigned short debug;
+    unsigned short latency;
+    unsigned short version;
 };
 
 //------------------------------------------------------------------------------
@@ -115,7 +130,7 @@ struct pc_to_hid_message {  // 4*2 = 8 bytes
 //==============================================================================
 /*!
     \class      cWoodenDevice
-    \ingroup    devices  
+    \ingroup    devices
 
     \brief
     Interface to custom haptic devices (template).
@@ -124,7 +139,7 @@ struct pc_to_hid_message {  // 4*2 = 8 bytes
     cWoodenDevice provides a basic template which allows to very easily
     interface CHAI3D to your own custom haptic device. \n\n
 
-    Simply follow the 11 commented step in file CWoodenDevice.cpp 
+    Simply follow the 11 commented step in file CWoodenDevice.cpp
     and complete the code accordingly.
     Depending of the numbers of degrees of freedom of your device, not
     all methods need to be implemented. For instance, if your device
@@ -140,17 +155,17 @@ struct pc_to_hid_message {  // 4*2 = 8 bytes
     Simply see how the haptic device handler already looks for
     device of type cWoodenDevice.\n\n
 
-    If you are encountering any problems with your implementation, check 
-    for instance file cDeltaDevices.cpp which implement supports for the 
+    If you are encountering any problems with your implementation, check
+    for instance file cDeltaDevices.cpp which implement supports for the
     Force Dimension series of haptic devices. In order to verify the implementation
     use the 01-device example to get started. Example 11-effects is a great
     demo to verify how basic haptic effects may behave with you haptic
     devices. If you do encounter vibrations or instabilities, try reducing
-    the maximum stiffness and/or damping values supported by your device. 
+    the maximum stiffness and/or damping values supported by your device.
     (see STEP-1 in file CWoodenDevice.cpp).\n
-    
-    Make  sure that your device is also communicating fast enough with 
-    your computer. Ideally the communication period should take less 
+
+    Make  sure that your device is also communicating fast enough with
+    your computer. Ideally the communication period should take less
     than 1 millisecond in order to reach a desired update rate of at least 1000Hz.
     Problems can typically occur when using a slow serial port (RS232) for
     instance.\n
@@ -215,13 +230,13 @@ public:
     // PUBLIC STATIC METHODS:
     //--------------------------------------------------------------------------
 
-public: 
+public:
 
     //! Returns the number of devices available from this class of device.
     static unsigned int getNumDevices();
 
 
-    //! A collection of variables that can be set in ~/wooden_haptics.json 
+    //! A collection of variables that can be set in ~/wooden_haptics.json
     struct configuration {
         double variant;                 // 0=WoodenHaptics default, 1=AluHaptics
         double diameter_capstan_a;      // m
@@ -249,9 +264,9 @@ public:
         double max_linear_damping;      // N/(m/s)
         double mass_body_b;             // Kg
         double mass_body_c;             // Kg
-        double length_cm_body_b;        // m     distance to center of mass  
+        double length_cm_body_b;        // m     distance to center of mass
         double length_cm_body_c;        // m     from previous body
-        double g_constant;              // m/s^2 usually 9.81 or 0 to 
+        double g_constant;              // m/s^2 usually 9.81 or 0 to
                                         //       disable gravity compensation
 
         // Set values
@@ -281,13 +296,15 @@ public:
         INTERNAL VARIABLES:
 
         If you need to declare any local variables or methods for your device,
-        you may do it here bellow. 
+        you may do it here bellow.
     */
     ////////////////////////////////////////////////////////////////////////////
 
     int lost_messages;
 
 protected:
+
+    Libremotehaptics* rh;
 
     const configuration m_config;
 
@@ -316,7 +333,7 @@ protected:
     std::thread t;
 
     int res;
-    unsigned char buf[9];// 1 extra byte for the report ID
+    unsigned char buf[19];// 1 extra byte for the report ID
     #define MAX_STR 255
     wchar_t wstr[MAX_STR];
     hid_device *handle;
@@ -325,6 +342,8 @@ protected:
 
     // for serial
     int fd;
+
+    int slowcounter;
 
 
 public:
