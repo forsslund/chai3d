@@ -221,6 +221,10 @@ if (${OS} MATCHES lin)
     link_directories ("${PROJECT_SOURCE_DIR}/external/s826/lib")
     set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} udev 826_64)
     #add_definitions(-DC_ENABLE_WOODEN_DEVICE_SUPPORT)
+
+    # new fsHapticDevice
+    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES}  rt boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
+
 endif ()
 
 # Remote
@@ -228,6 +232,8 @@ set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/
 link_directories ("${PROJECT_SOURCE_DIR}/external/libremotehaptics")
 set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/Qt58/5.8/msvc2015_64/lib/" )
 set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} remotehaptics Qt5Core Qt5Network)
+
+
 #add_definitions(-DC_ENABLE_REMOTE_DEVICE_SUPPORT)
 
 # GLFW

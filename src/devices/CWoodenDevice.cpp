@@ -33,7 +33,7 @@
     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
+    POSSIBILITY OF SUCH DAMAGE. 
 
     \author    Jonas Forsslund
     \author    Royal Institute of Technology
@@ -51,10 +51,10 @@
 
 #include "devices/CWoodenDevice.h"
 
-// Following includes are only used for reading/writing config file and to find
+// Following includes are only used for reading/writing config file and to find 
 // the user's home directory (where the config file will be stored)
 #include <iostream>
-#include <fstream>
+#include <fstream> 
 #include <sstream>
 #include <unistd.h>
 #include <sys/types.h>
@@ -69,15 +69,24 @@
 #include "hidapi.h"
 
 
-
+#define FSDEVICE
 //#define USB  // define this to use the usb version
-#define LAN
+//#define DELAY /// To test delay
+//#define PWM        // For PWM from DAQ, do not use with USB
 //#define SAVE_LOG
 //#define SERIAL  // for reading the orientation
 
-#ifdef LAN
-#include "../external/libremotehaptics/libremotehaptics.h"
+#ifndef USB
+#define SENSORAY
+#include "../../external/s826/include/826api.h"
 #endif
+
+// For delay testing
+#include <chrono>
+#include <thread>
+#include <ratio>
+
+
 
 
 #ifdef SERIAL
@@ -87,6 +96,7 @@
 #include <fcntl.h>   /* File control definitions */
 #include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
+
 #include <math/CQuaternion.h>
 #endif
 
@@ -99,7 +109,7 @@
 
     INSTRUCTION TO IMPLEMENT YOUR OWN CUSTOM DEVICE:
 
-    Please review header file CWoodenDevice.h for some initial
+    Please review header file CWoodenDevice.h for some initial 
     guidelines about how to implement your own haptic device using this
     template.
 
@@ -119,19 +129,19 @@ namespace chai3d {
 std::string toJSON(const woodenhaptics_message& m) {
     std::stringstream ss;
     ss << "{" << std::endl <<
-          "  'position_x':       " << m.position_x << "," << std::endl <<
-          "  'position_y':       " << m.position_y << "," << std::endl <<
-          "  'position_z':       " << m.position_z << "," << std::endl <<
-          "  'command_force_x':  " << m.command_force_x << "," << std::endl <<
-          "  'command_force_y':  " << m.command_force_y << "," << std::endl <<
-          "  'command_force_z':  " << m.command_force_z << "," << std::endl <<
-          "  'actual_current_0': " << m.actual_current_0 << "," << std::endl <<
-          "  'actual_current_1': " << m.actual_current_1 << "," << std::endl <<
-          "  'actual_current_2': " << m.actual_current_2 << "," << std::endl <<
-          "  'temperture_0':     " << m.temperature_0 << "," << std::endl <<
-          "  'temperture_1':     " << m.temperature_1 << "," << std::endl <<
-          "  'temperture_2':     " << m.temperature_2 << "," << std::endl <<
-          "}" << std::endl;
+        "  'position_x':       " << m.position_x << "," << std::endl <<
+        "  'position_y':       " << m.position_y << "," << std::endl <<
+        "  'position_z':       " << m.position_z << "," << std::endl <<
+        "  'command_force_x':  " << m.command_force_x << "," << std::endl <<
+        "  'command_force_y':  " << m.command_force_y << "," << std::endl <<
+        "  'command_force_z':  " << m.command_force_z << "," << std::endl <<
+        "  'actual_current_0': " << m.actual_current_0 << "," << std::endl <<
+        "  'actual_current_1': " << m.actual_current_1 << "," << std::endl <<
+        "  'actual_current_2': " << m.actual_current_2 << "," << std::endl <<
+        "  'temperture_0':     " << m.temperature_0 << "," << std::endl <<
+        "  'temperture_1':     " << m.temperature_1 << "," << std::endl <<
+        "  'temperture_2':     " << m.temperature_2 << "," << std::endl <<
+        "}" << std::endl;
 
     return ss.str();
 }
@@ -144,11 +154,11 @@ cWoodenDevice::configuration default_woody(){
     double data[] = { 0, 0.010, 0.010, 0.010,
                       0.080, 0.205, 0.245,
                       0.160, 0.120, 0.120,
-                      0.220, 0.000, 0.080, 0.100,
+                      0.220, 0.000, 0.080, 0.100, 
                       0.0259, 0.0259, 0.0259, 3.0, 2000, 2000, 2000,
                       5.0, 1000.0, 8.0,
                       0.170, 0.110, 0.051, 0.091, 0};
-    return cWoodenDevice::configuration(data);
+    return cWoodenDevice::configuration(data); 
 }
 
 double v(const std::string& json, const std::string& key){
@@ -160,79 +170,79 @@ cWoodenDevice::configuration fromJSON(std::string json){
     double d[]= {
         v(json,"variant"),
         v(json,"diameter_capstan_a"),
-        v(json,"diameter_capstan_b"),
-        v(json,"diameter_capstan_c"),
-        v(json,"length_body_a"),
-        v(json,"length_body_b"),
-        v(json,"length_body_c"),
-        v(json,"diameter_body_a"),
-        v(json,"diameter_body_b"),
-        v(json,"diameter_body_c"),
-        v(json,"workspace_origin_x"),
-        v(json,"workspace_origin_y"),
-        v(json,"workspace_origin_z"),
-        v(json,"workspace_radius"),
-        v(json,"torque_constant_motor_a"),
-        v(json,"torque_constant_motor_b"),
-        v(json,"torque_constant_motor_c"),
-        v(json,"current_for_10_v_signal"),
-        v(json,"cpr_encoder_a"),
+        v(json,"diameter_capstan_b"),      
+        v(json,"diameter_capstan_c"),      
+        v(json,"length_body_a"),           
+        v(json,"length_body_b"),           
+        v(json,"length_body_c"),           
+        v(json,"diameter_body_a"),         
+        v(json,"diameter_body_b"),         
+        v(json,"diameter_body_c"),         
+        v(json,"workspace_origin_x"),      
+        v(json,"workspace_origin_y"),      
+        v(json,"workspace_origin_z"),      
+        v(json,"workspace_radius"),      
+        v(json,"torque_constant_motor_a"), 
+        v(json,"torque_constant_motor_b"), 
+        v(json,"torque_constant_motor_c"), 
+        v(json,"current_for_10_v_signal"), 
+        v(json,"cpr_encoder_a"), 
         v(json,"cpr_encoder_b"),
-        v(json,"cpr_encoder_c"),
-        v(json,"max_linear_force"),
-        v(json,"max_linear_stiffness"),
-        v(json,"max_linear_damping"),
+        v(json,"cpr_encoder_c"),  
+        v(json,"max_linear_force"),   
+        v(json,"max_linear_stiffness"), 
+        v(json,"max_linear_damping"), 
         v(json,"mass_body_b"),
         v(json,"mass_body_c"),
         v(json,"length_cm_body_b"),
         v(json,"length_cm_body_c"),
-        v(json,"g_constant")
-    };
+        v(json,"g_constant")       
+    }; 
     return cWoodenDevice::configuration(d);
 }
 
 std::string j(const std::string& key, const double& value){
-    std::stringstream s;
-    s << "    \"" << key << "\":";
-    while(s.str().length()<32) s<< " ";
-    s << value << "," << std::endl;
-    return s.str();
+   std::stringstream s;
+   s << "    \"" << key << "\":";
+   while(s.str().length()<32) s<< " ";
+   s << value << "," << std::endl;
+   return s.str();
 }
 std::string toJSON(const cWoodenDevice::configuration& c){
-    using namespace std;
-    stringstream json;
-    json << "{" << endl
-         << j("variant",c.variant)
-         << j("diameter_capstan_a",c.diameter_capstan_a)
-         << j("diameter_capstan_b",c.diameter_capstan_b)
-         << j("diameter_capstan_c",c.diameter_capstan_c)
-         << j("length_body_a",c.length_body_a)
-         << j("length_body_b",c.length_body_b)
-         << j("length_body_c",c.length_body_c)
-         << j("diameter_body_a",c.diameter_body_a)
-         << j("diameter_body_b",c.diameter_body_b)
-         << j("diameter_body_c",c.diameter_body_c)
-         << j("workspace_origin_x",c.workspace_origin_x)
-         << j("workspace_origin_y",c.workspace_origin_y)
-         << j("workspace_origin_z",c.workspace_origin_z)
-         << j("workspace_radius",c.workspace_radius)
-         << j("torque_constant_motor_a",c.torque_constant_motor_a)
-         << j("torque_constant_motor_b",c.torque_constant_motor_b)
-         << j("torque_constant_motor_c",c.torque_constant_motor_c)
-         << j("current_for_10_v_signal",c.current_for_10_v_signal)
-         << j("cpr_encoder_a",c.cpr_encoder_a)
-         << j("cpr_encoder_b",c.cpr_encoder_b)
-         << j("cpr_encoder_c",c.cpr_encoder_c)
-         << j("max_linear_force",c.max_linear_force)
-         << j("max_linear_stiffness",c.max_linear_stiffness)
-         << j("max_linear_damping",c.max_linear_damping)
-         << j("mass_body_b",c.mass_body_b)
-         << j("mass_body_c",c.mass_body_c)
-         << j("length_cm_body_b",c.length_cm_body_b)
-         << j("length_cm_body_c",c.length_cm_body_c)
-         << j("g_constant",c.g_constant)
-         << "}" << endl;
-    return json.str();
+   using namespace std;
+   stringstream json;
+   json << "{" << endl
+        << j("variant",c.variant)
+        << j("diameter_capstan_a",c.diameter_capstan_a)
+        << j("diameter_capstan_b",c.diameter_capstan_b)
+        << j("diameter_capstan_c",c.diameter_capstan_c)
+        << j("length_body_a",c.length_body_a)
+        << j("length_body_b",c.length_body_b)
+        << j("length_body_c",c.length_body_c)
+        << j("diameter_body_a",c.diameter_body_a)
+        << j("diameter_body_b",c.diameter_body_b)
+        << j("diameter_body_c",c.diameter_body_c)
+        << j("workspace_origin_x",c.workspace_origin_x)
+        << j("workspace_origin_y",c.workspace_origin_y)
+        << j("workspace_origin_z",c.workspace_origin_z)
+        << j("workspace_radius",c.workspace_radius)
+        << j("torque_constant_motor_a",c.torque_constant_motor_a)
+        << j("torque_constant_motor_b",c.torque_constant_motor_b)
+        << j("torque_constant_motor_c",c.torque_constant_motor_c)
+        << j("current_for_10_v_signal",c.current_for_10_v_signal)
+        << j("cpr_encoder_a",c.cpr_encoder_a)
+        << j("cpr_encoder_b",c.cpr_encoder_b)
+        << j("cpr_encoder_c",c.cpr_encoder_c)
+        << j("max_linear_force",c.max_linear_force)
+        << j("max_linear_stiffness",c.max_linear_stiffness)
+        << j("max_linear_damping",c.max_linear_damping)
+        << j("mass_body_b",c.mass_body_b)
+        << j("mass_body_c",c.mass_body_c)
+        << j("length_cm_body_b",c.length_cm_body_b)
+        << j("length_cm_body_c",c.length_cm_body_c)
+        << j("g_constant",c.g_constant)
+        << "}" << endl;
+   return json.str();
 }
 
 void write_config_file(const cWoodenDevice::configuration& config){
@@ -241,7 +251,7 @@ void write_config_file(const cWoodenDevice::configuration& config){
         homedir = getpwuid(getuid())->pw_dir;
     }
 
-    std::cout << "Writing configuration to: "<< homedir
+    std::cout << "Writing configuration to: "<< homedir 
               << "/woodenhaptics.json" << std::endl;
     std::ofstream ofile;
     ofile.open(std::string(homedir) + "/woodenhaptics.json");
@@ -255,7 +265,7 @@ cWoodenDevice::configuration read_config_file(){
         homedir = getpwuid(getuid())->pw_dir;
     }
 
-    std::cout << "Trying loading configuration from: "<< homedir
+    std::cout << "Trying loading configuration from: "<< homedir 
               << "/woodenhaptics.json" << std::endl;
 
     std::ifstream ifile;
@@ -265,7 +275,7 @@ cWoodenDevice::configuration read_config_file(){
         buffer << ifile.rdbuf();
         ifile.close();
         std::cout << "Success. " << std::endl;
-        return fromJSON(buffer.str());
+        return fromJSON(buffer.str());    
     } else {
         std::cout << "File not found. We will write one "
                   << "based on default configuration values." << std::endl;
@@ -283,7 +293,7 @@ cWoodenDevice::configuration read_config_file(){
     Constructor of cWoodenDevice.
 */
 //==============================================================================
-cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
+cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber): 
     m_config(read_config_file())
 {
     // the connection to your device has not yet been established.
@@ -292,6 +302,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
 
     for(int i=0;i<3;++i)
         global_pwm_percent[i]=0.1;
+
 
     ////////////////////////////////////////////////////////////////////////////
     /*
@@ -308,10 +319,10 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     // NAME: WoodenHaptics
     //--------------------------------------------------------------------------
 
-    // If we have a config file, use its values, otherwise,
+    // If we have a config file, use its values, otherwise, 
     // use standard values (and write them to config file)
-    std::cout << std::endl << "WoodenHaptics configuration used: " << std::endl
-              << toJSON(m_config) << std::endl;
+    std::cout << std::endl << "WoodenHaptics configuration used: " << std::endl 
+              << toJSON(m_config) << std::endl; 
 
     // haptic device model (see file "CGenericHapticDevice.h")
     m_specifications.m_model                         = C_HAPTIC_DEVICE_WOODEN;
@@ -358,13 +369,13 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     /*
         DAMPING PROPERTIES:
 
-        Start with small values as damping terms can be high;y sensitive to
+        Start with small values as damping terms can be high;y sensitive to 
         the quality of your velocity signal and the spatial resolution of your
-        device. Try gradually increasing the values by using example "01-devices"
+        device. Try gradually increasing the values by using example "01-devices" 
         and by enabling viscosity with key command "2".
     */
     ////////////////////////////////////////////////////////////////////////////
-
+    
     // Maximum recommended linear damping factor Kv
     m_specifications.m_maxLinearDamping			      = m_config.max_linear_damping;   // [N/(m/s)]
 
@@ -426,9 +437,9 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
 
         If want to support multiple devices, using the method argument
         a_deviceNumber to know which device to setup
-    */
+    */  
     ////////////////////////////////////////////////////////////////////////////
-
+        
 
     // *** INSERT YOUR CODE HERE ***
     m_deviceAvailable = true; // this value should become 'true' when the device is available.
@@ -477,8 +488,8 @@ bool cWoodenDevice::open()
         If the connection succeeds, set the variable 'result' to true.
         otherwise, set the variable 'result' to false.
 
-        Verify that your device is calibrated. If your device
-        needs calibration then call method calibrate() for wich you will
+        Verify that your device is calibrated. If your device 
+        needs calibration then call method calibrate() for wich you will 
         provide code in STEP 5 further bellow.
     */
     ////////////////////////////////////////////////////////////////////////////
@@ -487,69 +498,7 @@ bool cWoodenDevice::open()
     result = true; // TODO: Verify
 
     // *** INSERT YOUR CODE HERE ***
-#ifdef LAN
-    rh = new Libremotehaptics();
-    rh->init(47111);
-#endif
-
-    // USB HID ---------------------------------------------
-#ifdef USB
-    devs = hid_enumerate(0x0, 0x0);
-    cur_dev = devs;
-    while (cur_dev) {
-        printf("Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls", cur_dev->vendor_id, cur_dev->product_id, cur_dev->path, cur_dev->serial_number);
-        printf("\n");
-        printf("  Manufacturer: %ls\n", cur_dev->manufacturer_string);
-        printf("  Product:      %ls\n", cur_dev->product_string);
-        printf("  Release:      %hx\n", cur_dev->release_number);
-        printf("  Interface:    %d\n",  cur_dev->interface_number);
-        printf("\n");
-        cur_dev = cur_dev->next;
-    }
-    hid_free_enumeration(devs);
-
-    // Open the device using the VID, PID,
-    // and optionally the Serial number.
-    handle = hid_open(0x1234, 0x6, NULL);
-    if (!handle) {
-        printf("unable to open device. Is it plugged in and you run as root?\n");
-    }
-    // Set the hid_read() function to be non-blocking.
-    if(handle)
-        hid_set_nonblocking(handle, 1);
-
-    if(handle)
-        std::cout << "Opened USB Connection" << std::endl;
-    // ------------------------------------------------------
-#endif
-
-#ifdef SERIAL
-    fd = ::open("/dev/ttyACM0", O_RDONLY | O_NOCTTY);
-
-    /* *** Configure Port *** */
-    struct termios tty;
-    memset (&tty, 0, sizeof tty);
-
-    /* Error Handling */
-    if ( tcgetattr ( fd, &tty ) != 0 )
-    {
-        std::cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << std::endl;
-    }
-
-    /* Set Baud Rate */
-    cfsetospeed (&tty, B57600);
-    cfsetispeed (&tty, B57600);
-
-    /* Flush Port, then applies attributes */
-    tcflush( fd, TCIFLUSH );
-
-
-    if ( tcsetattr ( fd, TCSANOW, &tty ) != 0)
-    {
-        std::cout << "Error " << errno << " from tcsetattr" << std::endl;
-    }
-#endif
-
+    fs = new FsHapticDeviceThread(false);
 
 
 
@@ -591,47 +540,13 @@ bool cWoodenDevice::close()
     */
     ////////////////////////////////////////////////////////////////////////////
 
-    // Save log
-#ifdef SAVE_LOG
-    using namespace std;
-
-    ofstream myfile;
-    myfile.open ("log.m");
-    int lines = timestamp.size() < forces.size() ? timestamp.size() : forces.size();
-    lines = positions.size() < lines ? positions.size() : lines;
-    string channel[] = {"force_x=[","force_y=[","force_z=[","timestamp=[","pos_x=[","pos_y=[","pos_z=["};
-    for(int c=0;c<7;++c){
-        myfile << channel[c];
-        for(int i=0;i<lines;++i){
-            if(c==0) myfile << forces[i].x();
-            if(c==1) myfile << forces[i].y();
-            if(c==2) myfile << forces[i].z();
-            if(c==3) myfile << timestamp[i]*0.000001;
-            if(c==4) myfile << positions[i].x()*1000;
-            if(c==5) myfile << positions[i].y()*1000;
-            if(c==6) myfile << positions[i].z()*1000;
-            myfile << " ";
-        }
-        myfile << "];\n";
-    }
-    myfile.close();
-#endif
-
-
 
     bool result = C_SUCCESS; // if the operation fails, set value to C_ERROR.
 
     // *** INSERT YOUR CODE HERE ***
 
     std::cout << "\nClosing\n";
-    // Disable power
 
-
-    //close HID device
-    if(handle){
-        hid_close(handle);
-        hid_exit();
-    }
 
     // update status
     m_deviceReady = false;
@@ -651,16 +566,16 @@ bool cWoodenDevice::calibrate(bool a_forceCalibration)
     ////////////////////////////////////////////////////////////////////////////
     /*
         STEP 5:
-
-        Here you shall implement code that handles a calibration procedure of the
+        
+        Here you shall implement code that handles a calibration procedure of the 
         device. In practice this may include initializing the registers of the
-        encoder counters for instance.
+        encoder counters for instance. 
 
         If the device is already calibrated and  a_forceCalibration == false,
         the method may immediately return without further action.
         If a_forceCalibration == true, then the calibrartion procedure
         shall be executed even if the device has already been calibrated.
-
+ 
         If the calibration procedure succeeds, the method returns C_SUCCESS,
         otherwise return C_ERROR.
     */
@@ -669,6 +584,8 @@ bool cWoodenDevice::calibrate(bool a_forceCalibration)
     bool result = C_SUCCESS;
 
     // *** INSERT YOUR CODE HERE ***
+
+    // error = calibrateMyDevice()
 
     return (result);
 }
@@ -710,63 +627,6 @@ unsigned int cWoodenDevice::getNumDevices()
 }
 
 
-
-
-
-const double pi = 3.14159265359;
-
-//==============================================================================
-// Helper functions for getPosition & setForce
-//==============================================================================
-
-struct pose {
-    double Ln;
-    double Lb;
-    double Lc;
-    double tA;  // angle of body A (theta_A)
-    double tB;  // angle of body B (theta_B)
-    double tC;  // angle of body C (theta_C)
-};
-
-pose calculate_pose(const cWoodenDevice::configuration& c, double* encoder_values) {
-    pose p;
-
-    double cpr[] = { c.cpr_encoder_a, c.cpr_encoder_b, c.cpr_encoder_c };
-    double gearRatio[] = { c.diameter_body_a / c.diameter_capstan_a,
-                           -c.diameter_body_b / c.diameter_capstan_b,
-                           c.diameter_body_c / c.diameter_capstan_c };
-
-    double dofAngle[3];
-#if defined(USB) || defined(LAN)
-    for(int i=0;i<3;i++)
-        dofAngle[i] = (2.0*pi*encoder_values[i]/cpr[i]) / gearRatio[i];
-#else
-    for(int i=0;i<3;i++)
-        dofAngle[i] = getMotorAngle(i,cpr[i]) / gearRatio[i];
-    dofAngle[0] = -dofAngle[0]; // 2016-04-25 sign switch
-#endif
-
-    if(int(c.variant) == 1){ // ALUHAPTICS
-        dofAngle[0] = -dofAngle[0];
-        dofAngle[1] = dofAngle[1];
-        dofAngle[2] = dofAngle[2];
-    }
-
-    // Calculate dof angles (theta) for each body
-    p.Ln = c.length_body_a;
-    p.Lb = c.length_body_b;
-    p.Lc = c.length_body_c;
-    p.tA = dofAngle[0];
-    p.tB = dofAngle[1];
-    p.tC = dofAngle[2]; // 2016-05-30
-
-    return p;
-}
-
-double deg(double rad){
-    return 360*rad/(2*3.141592);
-}
-
 //==============================================================================
 /*!
     Read the position of your device. Units are meters [m].
@@ -791,91 +651,16 @@ bool cWoodenDevice::getPosition(cVector3d& a_position)
         For consistency, units must be in meters.
         If your device is located in front of you, the x-axis is pointing
         towards you (the operator). The y-axis points towards your right
-        hand side and the z-axis points up towards the sky.
+        hand side and the z-axis points up towards the sky. 
     */
     ////////////////////////////////////////////////////////////////////////////
 
     bool result = C_SUCCESS;
-    double x,y,z;
 
-    // *** INSERT YOUR CODE HERE, MODIFY CODE BELLOW ACCORDINGLY ***
-#ifndef USB
-#ifndef LAN
-    const pose p = calculate_pose(m_config,0);
-#endif
-#endif
+    fsVec3d p = fs->getPos();
+    a_position = cVector3d(p.x(),p.y(),p.z());
+    //a_position = a_position * 0;
 
-#ifdef USB
-    if(handle){
-        int res=0;
-        while (res == 0) {
-            res = hid_read(handle, buf, sizeof(buf));
-            if(res==18) // Got a correct message
-                hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(buf);
-        }
-        int flush=0;
-        while(int res2 = hid_read(handle, buf, sizeof(buf))){
-            if(res==18) // Got a correct message
-                hid_to_pc = *reinterpret_cast<hid_to_pc_message*>(buf);
-            ++flush;
-        }
-        lost_messages += flush;
-    }
-
-    double encoder_values[] = { -hid_to_pc.encoder_a,
-                                hid_to_pc.encoder_b,
-                                hid_to_pc.encoder_c };
-
-    pc_to_hid.debug = hid_to_pc.debug;
-
-    using namespace std;
-
-    pose p  = calculate_pose(m_config, encoder_values);
-#endif
-
-
-#ifdef LAN
-    Libremotehaptics::Vector3d lp;
-    rh->getPosition(lp);
-    double encoder_values[] = { -lp.x,
-                                 lp.y,
-                                 lp.z };
-    pose p  = calculate_pose(m_config, encoder_values);
-
-    slowcounter++;
-   // if(!(slowcounter%1000))
-        //std::cout << "Read from net: " << lp.x << " " << lp.y << " " << lp.z << " " << std::endl;
-#endif
-
-
-
-    const double& Ln = p.Ln;
-    const double& Lb = p.Lb;
-    const double& Lc = p.Lc;
-    const double& tA = p.tA;
-    double tB = p.tB;
-    double tC = p.tC;
-
-    // Mike edition
-    if(int(m_config.variant) == 1) // ALUHAPTICS
-        tB = tB + 3.141592/2;
-    else
-        tC = -tC + 3.141592/2;
-
-    x = cos(tA)*(Lb*sin(tB)+Lc*sin(tC))    - m_config.workspace_origin_x;
-    y = sin(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_y;
-    z = Ln+Lb*cos(tB)-Lc*cos(tC) - m_config.workspace_origin_z;
-
-    // store new position values
-    a_position.set(x, y, z);
-#ifdef SERIAL
-    a_position.set(0, 0, 0);
-#endif
-    latest_position = a_position;
-
-#ifdef SAVE_LOG
-    positions.push_back(a_position);
-#endif
 
     // estimate linear velocity
     estimateLinearVelocity(a_position);
@@ -927,15 +712,35 @@ bool cWoodenDevice::getRotation(cMatrix3d& a_rotation)
     // *** INSERT YOUR CODE HERE, MODIFY CODE BELLOW ACCORDINGLY ***
 
 
+
+
+
+
+
+
+
 #ifdef SERIAL
     char buffer[320];
     int n = read(fd, buffer, sizeof(buffer));
     if (n < 0)
-        fputs("read failed!\n", stderr);
+       fputs("read failed!\n", stderr);
+    //std::cout << std::string(buffer) << std::endl;
 
     using namespace std;
     string s = string(buffer);
+    //s.split
 
+
+
+    //string s = "0.41,0.13,0.05,-0.90\n";
+    /*
+    istringstream sn (s);
+    string oneline;
+    while(!sn.eof()){
+
+        getline( sn, oneline, '\n' );  // try to read the next field into it
+    }
+    */
     std::size_t last_end = s.rfind(']');
     std::size_t last_start = s.rfind('[');
     cout << s << endl;
@@ -948,12 +753,12 @@ bool cWoodenDevice::getRotation(cMatrix3d& a_rotation)
         double d[4]; int i=0;
         while (!ss.eof())         // See the WARNING above for WHY we're doing this!
         {
-            string x;               // here's a nice, empty string
-            getline( ss, x, ',' );  // try to read the next field into it
-            cout << x << endl;      // print it out, EVEN IF WE ALREADY HIT EOF
-            d[i++] = atof(x.c_str());
-            //cout << "double " << d << endl;
-            if(i>4) cout << "Much problem!" << endl;
+          string x;               // here's a nice, empty string
+          getline( ss, x, ',' );  // try to read the next field into it
+          cout << x << endl;      // print it out, EVEN IF WE ALREADY HIT EOF
+          d[i++] = atof(x.c_str());
+          //cout << "double " << d << endl;
+          if(i>4) cout << "Much problem!" << endl;
         }
         if(i==4){
             cQuaternion q(d[0],d[1],d[2],d[3]);
@@ -964,6 +769,27 @@ bool cWoodenDevice::getRotation(cMatrix3d& a_rotation)
     }
 
 #endif
+
+
+
+
+
+
+
+    // if the device does not provide any rotation capabilities 
+    // set the rotation matrix equal to the identity matrix.
+    /*
+    r00 = 1.0;  r01 = 0.0;  r02 = 0.0;
+    r10 = 0.0;  r11 = 1.0;  r12 = 0.0;
+    r20 = 0.0;  r21 = 0.0;  r22 = 1.0;
+
+    frame.set(r00, r01, r02, r10, r11, r12, r20, r21, r22);
+    */
+
+    fsRot r = fs->getRot();
+    frame.set(r.m[0][0], r.m[0][1], r.m[0][2],
+              r.m[1][0], r.m[1][1], r.m[1][2],
+              r.m[2][0], r.m[2][1], r.m[2][2]);
 
     // store new rotation matrix
     a_rotation = frame;
@@ -1011,6 +837,7 @@ bool cWoodenDevice::getGripperAngleRad(double& a_angle)
     return (result);
 }
 
+
 //==============================================================================
 /*!
     Send a force [N] and a torque [N*m] and gripper torque [N*m] to the haptic device.
@@ -1023,18 +850,18 @@ bool cWoodenDevice::getGripperAngleRad(double& a_angle)
 */
 //==============================================================================
 bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
-                                                     const cVector3d& a_torque,
-                                                     const double a_gripperForce)
+                                                       const cVector3d& a_torque,
+                                                       const double a_gripperForce)
 {
     ////////////////////////////////////////////////////////////////////////////
     /*
         STEP 10:
-
+        
         Here you may implement code which sends a force (fx,elseifdeffy,fz),
         torque (tx, ty, tz) and/or gripper force (gf) command to your haptic device.
 
-        If your device does not support one of more of the force, torque and
-        gripper force capabilities, you can simply ignore them.
+        If your device does not support one of more of the force, torque and 
+        gripper force capabilities, you can simply ignore them. 
 
         Note:
         For consistency, units must be in Newtons and Newton-meters
@@ -1044,18 +871,12 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
 
         For instance: if the force = (1,0,0), the device should move towards
         the operator, if the force = (0,0,1), the device should move upwards.
-        A torque (1,0,0) would rotate the handle counter clock-wise around the
+        A torque (1,0,0) would rotate the handle counter clock-wise around the 
         x-axis.
     */
     ////////////////////////////////////////////////////////////////////////////
 
     latest_force = a_force;
-#ifdef SAVE_LOG
-    forces.push_back(a_force);
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    double duration_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start_of_app).count();
-    timestamp.push_back(duration_us);
-#endif
     bool result = C_SUCCESS;
 
     // store new force value.
@@ -1063,160 +884,10 @@ bool cWoodenDevice::setForceAndTorqueAndGripperForce(const cVector3d& a_force,
     m_prevTorque = a_torque;
     m_prevGripperForce = a_gripperForce;
 
-    double gf = a_gripperForce;
+    fsVec3d f = fsVec3d(a_force.x(),a_force.y(), a_force.z());
+    fs->setForce(f);
 
-    // *** INSERT YOUR CODE HERE ***
-#ifdef USB
-    double encoder_values[] = { -hid_to_pc.encoder_a,
-                                hid_to_pc.encoder_b,
-                                hid_to_pc.encoder_c };
-    const pose p = calculate_pose(m_config, encoder_values);    
-#endif
-
-#ifdef LAN
-    Libremotehaptics::Vector3d lp;
-    rh->getPosition(lp);
-    double encoder_values[] = { -lp.x,
-                                 lp.y,
-                                 lp.z };
-    pose p  = calculate_pose(m_config, encoder_values);
-#endif
-
-#ifndef USB
-#ifndef LAN
-    const pose p = calculate_pose(m_config,0);
-#endif
-#endif
-
-    const double& Ln = p.Ln;
-    const double& Lb = p.Lb;
-    const double& Lc = p.Lc;
-    const double& tA = p.tA;
-    double tB = p.tB;
-    double tC = p.tC;
-
-    // Mike edition
-    if(int(m_config.variant) == 1) // ALUHAPTICS
-        tB = tB + 3.141592/2;
-    else
-        tC = -tC + 3.141592/2;
-
-    // Make Jacobian 2016-05-30
-    cMatrix3d J;
-    J.set(  -sin(tA)*(Lb*sin(tB)+Lc*sin(tC)),    Lb*cos(tA)*cos(tB),   Lc*cos(tA)*cos(tC),
-            cos(tA)*(Lb*sin(tB)+Lc*sin(tC)),    Lb*sin(tA)*cos(tB),   Lc*sin(tA)*cos(tC),
-            0,                           -Lb*sin(tB),           Lc*sin(tC)     );
-
-    cVector3d f=a_force;
-    //f += cVector3d(-0.2,0,0);
-    cVector3d t=cTranspose(J)*f;
-
-    // Gravity compensation
-    const double& g=m_config.g_constant;
-    const double& Lb_cm = m_config.length_cm_body_b;
-    const double& Lc_cm = m_config.length_cm_body_c;
-    const double& mB = m_config.mass_body_b;
-    const double& mC = m_config.mass_body_c;
-
-    t = t + -g*cVector3d( 0,
-                          mB*Lb_cm*sin(tB) + mC*(Lb_cm + Lc_cm)*sin(tC),
-                          mC*Lc_cm*sin(tC) );
-
-    // Gear down
-    double motorTorque[] = {
-        t.x() * m_config.diameter_capstan_a / m_config.diameter_body_a,
-        -t.y() * m_config.diameter_capstan_b / m_config.diameter_body_b,
-        -t.z() * m_config.diameter_capstan_c / m_config.diameter_body_c }; // switched sign 2016-05-30
-
-
-    if(int(m_config.variant) == 1){ // ALUHAPTICS
-        motorTorque[0] = motorTorque[0];
-        motorTorque[1] = motorTorque[1];
-        motorTorque[2] = -motorTorque[2];
-    }
-
-    latest_motor_torques = cVector3d(motorTorque[0],motorTorque[1],motorTorque[2]);
-
-    // Set motor torque (t)
-    double torque_constant[] = { m_config.torque_constant_motor_a,
-                                 m_config.torque_constant_motor_b,
-                                 m_config.torque_constant_motor_c };
-
-    short signalToSend[3] = {0,0,0};
-    int dir[3];
-    int dir_chan[3] = {16,32,64}; // DIO4, DIO5, DIO6
-    int dir_sum=0;
-
-    for(int i=0;i<3;++i){
-        double motorAmpere = motorTorque[i] / torque_constant[i];
-        double signal = motorAmpere * 10.0 / m_config.current_for_10_v_signal;
-        if(signal>10.0)  signal =  10.0;
-        if(signal<-10.0) signal = -10.0;
-
-        dir[i] = cSign(signal) > 0 ? 1 : 2;
-        dir_sum += cSign(signal) < 0 ? dir_chan[i] : 0;
-#if defined(USB) || defined(LAN)
-        if(motorAmpere>3) motorAmpere = 3;
-        if(motorAmpere<-3) motorAmpere = -3;
-        signalToSend[i] = short(motorAmpere*1000);
-#endif
-
-#ifndef USB
-#ifndef LAN
-        // One at a time
-        uint direction = cSign(v) > 0 ? 1 : 2;
-
-        uint data[2];
-        data[0] = dir_chan[i];
-        data[1] = 0;
-        S826_DioOutputWrite(0,data,direction);
-
-        setVolt(signal,i);
-#endif
-#endif
-    }
-
-
-
-#ifdef USB
-    unsigned char out_buf[19];
-
-    pc_to_hid.current_motor_a_mA = signalToSend[0];
-    pc_to_hid.current_motor_b_mA = signalToSend[1];
-    pc_to_hid.current_motor_c_mA = signalToSend[2];
-
-    torqueSignals = cVector3d(signalToSend[0], signalToSend[1], signalToSend[2]);
-
-    unsigned char* msg_buf = reinterpret_cast<unsigned char*>(&pc_to_hid);
-
-    //Fill the report
-    out_buf[0] = 0;
-    for (int i = 1; i < 19; i++) {
-        out_buf[i] = msg_buf[i-1];
-    }
-    if(handle){
-        int error = hid_write(handle,out_buf,sizeof(out_buf));
-        if(error!=19){
-            std::cout << "hid_write return " << error << std::endl;
-        }else{
-            std::cout  << "Latency:" << hid_to_pc.latency << " A:" << signalToSend[0] << " B:" << signalToSend[1]<< " C:" << signalToSend[2]<< std::endl;
-        }
-
-    }
-#endif
-
-
-
-#ifdef LAN
-    Libremotehaptics::Vector3d lf;
-    lf.x = signalToSend[0];
-    lf.y = signalToSend[1];
-    lf.z = signalToSend[2];
-    rh->setForce(lf);
-    //std::cout << "F: " << lf.x << " " << lf.y << " " << lf.z << " " << std::endl;
-#endif
-
-
+    // exit
     return (result);
 }
 
