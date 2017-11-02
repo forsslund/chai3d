@@ -396,9 +396,9 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
 
 #define VINTAGE
 #ifdef VINTAGE
-    double tD = -encRot[2]*2*pi/2000.0;
+    double tD = -encRot[0]*2*pi/2000.0;
     double tE = -encRot[1]*2*pi/2000.0;
-    double tF = -encRot[0]*2*pi/2000.0;
+    double tF = -encRot[2]*2*pi/2000.0;
 
     // rotate about z (body a)
     fsRot rA;
