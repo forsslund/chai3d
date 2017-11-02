@@ -1,4 +1,8 @@
+#ifdef USE_HAPTICS // For H3D
+#include <HAPI/kinematics.h>
+#else
 #include "kinematics.h"
+#endif
 #include <string>
 
 #include <iostream>
@@ -6,7 +10,7 @@
 #include <sstream>
 #include <cmath>
 
-#define UNIX;
+#define UNIX
 #ifdef UNIX
 namespace unix {
     // Following includes are only used for reading/writing config file and to find
@@ -390,6 +394,37 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
     fsRot r;
     r.identity();
 
+#define VINTAGE
+#ifdef VINTAGE
+    double tD = -encRot[2]*2*pi/2000.0;
+    double tE = -encRot[1]*2*pi/2000.0;
+    double tF = -encRot[0]*2*pi/2000.0;
+
+    // rotate about z (body a)
+    fsRot rA;
+    rA.rot_z(tA);
+
+    // rotate about y (body b)
+    fsRot rB;
+    //rB.rot_y(tB-3.141592/2);
+
+    // rotate about y (body c)
+    fsRot rC;
+    rC.rot_y(-tC);
+
+    // rotate about x
+    fsRot rD;
+    rD.rot_z(tD);
+    // rotate about y
+    fsRot rE;
+    rE.rot_y(tE);
+    // rotate about x
+    fsRot rF;
+    rF.rot_x(tF);
+    r =  rA*rB*rC*rD*rE*rF;
+#endif
+
+#ifdef RAMTIN
     double tD = encRot[0]*2*pi/4096.0;
     double tE = -encRot[1]*2*pi/4096.0;
     double tF = encRot[2]*2*pi/4096.0;
@@ -416,6 +451,8 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
     fsRot rF;
     rF.rot_x(tF);
     r =  rA*rB*rC*rD*rE *rF;
+#endif
+
     return r;
 }
 

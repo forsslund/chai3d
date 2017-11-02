@@ -1,5 +1,10 @@
+#ifdef USE_HAPTICS // For H3D
+#include <HAPI/kinematics.h>
+#include <HAPI/fshapticdevicethread.h>
+#else
 #include "kinematics.h"
 #include "fshapticdevicethread.h"
+#endif
 
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>

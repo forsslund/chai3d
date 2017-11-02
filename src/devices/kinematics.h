@@ -21,7 +21,7 @@ struct fsRot {
     //enum {GARBAGE, IDENTITY, ROT_X, ROT_Y, ROT_Z};
     double m[3][3];
     //double operator[](int i){return (double[])(r)[i];}
-    fsRot(){}
+    fsRot(){identity();}
     inline void set(double m[3][3]){
         for(int i=0;i<3;++i)
             for(int j=0;j<3;++j)
