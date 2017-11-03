@@ -168,7 +168,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES Debug)
   add_definitions ("-DDEBUG")
 endif ()
 if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  add_definitions ("-DUSE_X86_64_ASM")
+#  add_definitions ("-DUSE_X86_64_ASM")
 endif ()
 
 # static library
