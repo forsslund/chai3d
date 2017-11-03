@@ -68,14 +68,6 @@
 #include "devices/CSixenseDevices.h"
 #endif
 
-#if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
-#include "devices/CWoodenDevice.h"
-#endif
-
-#if defined(C_ENABLE_REMOTE_DEVICE_SUPPORT)
-#include "devices/CRemoteDevice.h"
-#endif
-
 #if defined(C_ENABLE_CUSTOM_DEVICE_SUPPORT)
 #include "devices/CMyCustomDevice.h"
 #endif
@@ -219,46 +211,6 @@ void cHapticDeviceHandler::update()
     for (int i=0; i<count; i++)
     {
         device = cPhantomDevice::create(i);
-        m_devices[m_numDevices] = device;
-        m_numDevices++;
-    }
-
-    #endif
-
-
-    //--------------------------------------------------------------------------
-    // search for Wooden Haptics (Sensoray 826 or USB) device
-    //--------------------------------------------------------------------------
-    #if defined(C_ENABLE_WOODEN_DEVICE_SUPPORT)
-
-    // check for how many devices are available for this class of devices
-    // (Note however that WoodenDevice will currently always return 1 device.
-    count = cWoodenDevice::getNumDevices();
-
-    //  open all remaining devices
-    for (int i=0; i<count; i++)
-    {
-        device = cWoodenDevice::create(i);
-        m_devices[m_numDevices] = device;
-        m_numDevices++;
-    }
-
-    #endif
-
-
-    //--------------------------------------------------------------------------
-    // search for Remote Haptics device
-    //--------------------------------------------------------------------------
-    #if defined(C_ENABLE_REMOTE_DEVICE_SUPPORT)
-
-    // check for how many devices are available for this class of devices
-    // (Note however that WoodenDevice will currently always return 1 device.
-    count = cRemoteDevice::getNumDevices();
-
-    //  open all remaining devices
-    for (int i=0; i<count; i++)
-    {
-        device = cRemoteDevice::create(i);
         m_devices[m_numDevices] = device;
         m_numDevices++;
     }

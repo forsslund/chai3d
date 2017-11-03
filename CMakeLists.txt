@@ -157,8 +157,7 @@ include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/src/Theora)
 
 # static library source files
-file (GLOB_RECURSE source RELATIVE ${CHAI3D_SOURCE_DIR} ${CHAI3D_SOURCE_DIR}/src/*.cpp ${CHAI3D_SOURCE_DIR}/src/*.c ${CHAI3D_SOURCE_DIR}/src/*.h)
-#file (GLOB_RECURSE source RELATIVE ${CHAI3D_SOURCE_DIR} ${CHAI3D_SOURCE_DIR}/src/*.cpp ${CHAI3D_SOURCE_DIR}/src/*.h)
+file (GLOB_RECURSE source RELATIVE ${CHAI3D_SOURCE_DIR} ${CHAI3D_SOURCE_DIR}/src/*.cpp ${CHAI3D_SOURCE_DIR}/src/*.h)
 
 # static library external dependencies source files
 file (GLOB_RECURSE source_eigen     RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/Eigen/Eigen/*)
@@ -170,7 +169,6 @@ file (GLOB_RECURSE source_png       RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOU
 file (GLOB_RECURSE source_pugixml   RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/pugixml/*.c      ${PROJECT_SOURCE_DIR}/external/pugixml/*.h)
 file (GLOB_RECURSE source_openal    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/openal/*.c       ${PROJECT_SOURCE_DIR}/external/openal/*.h)
 file (GLOB_RECURSE source_theora    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.c ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.cpp ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.h)
-file (GLOB_RECURSE source_hidlib    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/hidlib/*.c       ${PROJECT_SOURCE_DIR}/external/hidlib/*.h )
 
 # platform-specific source files adjustments
 if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
@@ -192,7 +190,7 @@ endforeach ()
 add_definitions (${PROJECT_DEFINITIONS} -DGLEW_STATIC -DAL_ALEXT_PROTOTYPES -DAL_BUILD_LIBRARY -DAL_LIBTYPE_STATIC -D__THEORA -D_LIB)
 
 # static library
-add_library (chai3d STATIC ${source} ${source_hidlib} ${source_eigen} ${source_gif} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora} )
+add_library (chai3d STATIC ${source} ${source_eigen} ${source_gif} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora})
 
 # library exports
 set (CHAI3D_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external/Eigen" "${PROJECT_SOURCE_DIR}/external/glew/include" "${OPENGL_INCLUDE_DIR}")
@@ -215,26 +213,6 @@ set (CHAI3D_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 #
 # optional extras
 #
-#set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} `pkg-config libudev --libs` -lrt)
-if (${OS} MATCHES lin)
-    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/s826/lib" "${PROJECT_SOURCE_DIR}/external/libhid")
-    link_directories ("${PROJECT_SOURCE_DIR}/external/s826/lib")
-    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} udev 826_64)
-    #add_definitions(-DC_ENABLE_WOODEN_DEVICE_SUPPORT)
-
-    # new fsHapticDevice
-    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES}  rt boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
-
-endif ()
-
-# Remote
-set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/libremotehaptics" )
-link_directories ("${PROJECT_SOURCE_DIR}/external/libremotehaptics")
-set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/Qt58/5.8/msvc2015_64/lib/" )
-set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} remotehaptics Qt5Core Qt5Network)
-
-
-#add_definitions(-DC_ENABLE_REMOTE_DEVICE_SUPPORT)
 
 # GLFW
 if (EXISTS ${PROJECT_SOURCE_DIR}/extras/GLFW)
