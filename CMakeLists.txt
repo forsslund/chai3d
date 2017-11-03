@@ -228,11 +228,15 @@ if (${OS} MATCHES lin)
 endif ()
 
 # Remote
-set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/libremotehaptics" )
-link_directories ("${PROJECT_SOURCE_DIR}/external/libremotehaptics")
-set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/Qt58/5.8/msvc2015_64/lib/" )
-set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} remotehaptics Qt5Core Qt5Network)
+#set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "${PROJECT_SOURCE_DIR}/external/libremotehaptics" )
+#link_directories ("${PROJECT_SOURCE_DIR}/external/libremotehaptics")
+#set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/Qt58/5.8/msvc2015_64/lib" )
+#set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} remotehaptics Qt5Core Qt5Network)
 
+# Windows and Boost
+include_directories ("C:/boost_1_63_0")
+set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/boost_1_63_0" )
+set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
 
 #add_definitions(-DC_ENABLE_REMOTE_DEVICE_SUPPORT)
 

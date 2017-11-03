@@ -10,7 +10,7 @@
 #include <sstream>
 #include <cmath>
 
-#define UNIX
+//#define UNIX
 #ifdef UNIX
 namespace unix {
     // Following includes are only used for reading/writing config file and to find
