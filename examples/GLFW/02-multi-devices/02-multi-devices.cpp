@@ -113,6 +113,15 @@ cLabel* labelRates;
 // some small spheres (cursor) representing position of each haptic device
 cShapeSphere* cursor[MAX_DEVICES];
 
+cShapeSphere* ball;
+cVector3d avatarLeftPos;
+cVector3d avatarRightPos;
+cShapeSphere* avatarLeft;
+cShapeSphere* avatarRight;
+bool prevButtonRight;
+bool prevButtonLeft;
+
+
 // some lines representing the velocity vector of each haptic device
 cShapeLine* velocity[MAX_DEVICES];
 
@@ -395,6 +404,22 @@ int main(int argc, char* argv[])
         camera->m_frontLayer->addChild(labelHapticDevicePosition[i]);
     }
 
+
+    ball = new cShapeSphere(0.03);
+    world->addChild(ball);
+    ball->m_material->setRedCrimson();
+
+
+    avatarRight = new cShapeSphere(0.012);
+    world->addChild(avatarRight);
+    avatarRight->m_material->setGreenDarkOlive();
+
+    avatarLeft = new cShapeSphere(0.012);
+    world->addChild(avatarLeft);
+    avatarLeft->m_material->setRedSalmon();
+
+
+
     // create a label to display the haptic and graphic rate of the simulation
     labelRates = new cLabel(font);
     camera->m_frontLayer->addChild(labelRates);
@@ -628,6 +653,20 @@ void updateHaptics(void)
     simulationRunning  = true;
     simulationFinished = false;
 
+    cVector3d rightDevice;
+    cVector3d rightAvatar;
+    cVector3d leftDevice;
+    cVector3d leftAvatar;
+
+    cVector3d diffRight;
+    cVector3d diffLeft;
+
+    prevButtonLeft = false;
+    prevButtonRight = false;
+
+    bool buttonRight = false;
+    bool buttonLeft = false;
+
     // main haptic simulation loop
     while(simulationRunning)
     {
@@ -713,6 +752,47 @@ void updateHaptics(void)
             hapticDevicePosition[i] = position;
 
 
+            if(i==0){
+                rightDevice = position;
+
+                if(!button0){
+                    avatarRightPos = position;
+                    avatarRight->setLocalPos(avatarRightPos);
+                }
+                if(button0 && !prevButtonRight){
+                    // pick up
+                    diffRight = avatarRightPos - ball->getLocalPos();
+                }
+                if(button0){
+                    // move about
+                    //ball->setLocalPos(avatarRightPos-diffRight);
+
+                }
+                buttonRight = button0;
+                prevButtonRight = button0;
+            }
+            if(i==1){
+                leftDevice = position;
+                if(!button0){
+                    avatarLeftPos = position;
+                    avatarLeft->setLocalPos(avatarLeftPos);
+                }
+                if(button0 && !prevButtonLeft){
+                    // pick up
+                    diffLeft = avatarLeftPos - ball->getLocalPos();
+                }
+                if(button0){
+                    // move about
+                    //ball->setLocalPos(avatarLeftPos-diffLeft);
+                    // move avatar
+                    //avatarLeftPos = ball->getLocalPos() + diffLeft;
+                    //avatarLeft->setLocalPos(avatarLeftPos);
+                }
+                prevButtonLeft = button0;
+                buttonLeft = button0;
+            }
+
+
             /////////////////////////////////////////////////////////////////////
             // COMPUTE AND APPLY FORCES
             /////////////////////////////////////////////////////////////////////
@@ -768,8 +848,76 @@ void updateHaptics(void)
             }
 
             // send computed force, torque, and gripper force to haptic device
-            hapticDevice[i]->setForceAndTorqueAndGripperForce(force, torque, gripperForce);
+            //hapticDevice[i]->setForceAndTorqueAndGripperForce(force, torque, gripperForce);
         }
+
+        cVector3d diff = rightDevice - leftDevice;
+        double d = diff.length();
+
+        cVector3d rightForce;
+        cVector3d leftForce;
+        rightForce.zero();
+        leftForce.zero();
+
+        /*
+        cVector3d dir = diff;
+        diff.normalize();
+
+        double k = 2000;
+        rightForce = d*k * -dir;
+        leftForce = d*k* dir;
+
+
+        // new
+        k = 200;
+        leftForce = k*(avatarLeftPos - leftDevice);
+        */
+
+        //avatarRightPos = rightDevice + (avatarLeftPos - leftDevice);
+        //avatarRight->setLocalPos(avatarRightPos);
+
+
+        // 2017-10-27
+        /*
+        rightDevice;
+        leftDevice;
+        rightAvatar;
+        leftAvatar;
+        leftForce;
+        rightForce;
+        */
+        // both hold sphere
+        double k = 200;
+
+        if(buttonRight && buttonLeft){
+            // move ball
+            cVector3d middle = (leftDevice + rightDevice)/2.0;
+            ball->setLocalPos(middle);
+            avatarLeftPos = middle+diffLeft;
+            avatarLeft->setLocalPos(avatarLeftPos);
+
+            avatarRightPos = middle+diffRight;
+            avatarRight->setLocalPos(avatarRightPos);
+
+            leftForce = k*(avatarLeftPos-leftDevice);
+            rightForce = k*(avatarRightPos-rightDevice);
+
+
+            //leftForce=cVector3d(-2,0,0);
+            //rightForce=cVector3d(2,0,0);
+
+        }
+
+
+
+
+
+        //hapticDevice[0]->setForce(rightForce);
+        hapticDevice[1]->setForce(leftForce);
+        hapticDevice[0]->setForce(rightForce);
+
+
+
 
         // update frequency counter
         freqCounterHaptics.signal(1);

@@ -839,7 +839,7 @@ void updateHaptics(void)
                 graspLine->setShowEnabled(true);
 
                 // compute force
-                cVector3d force = 1.0 * (posB - posA);
+                cVector3d force = 50.0 * (posB - posA);
 
                 // apply force
                 graspObject->addExternalForceAtPoint(force, posA - graspObject->getLocalPos());

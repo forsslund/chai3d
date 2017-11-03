@@ -94,11 +94,11 @@ cBulletStaticPlane* bulletInvisibleWall5;
 cBulletStaticPlane* bulletGround;
 
 // stiffness of virtual spring
-double linGain = 0.05;
+double linGain = 0.04;
 double angGain = 0.03;
 double linG;
 double angG;
-double linStiffness = 4000;
+double linStiffness = 800;
 double angStiffness = 30;
 
 
@@ -488,7 +488,7 @@ int main(int argc, char* argv[])
     bulletWorld->addChild(bulletTool);
 
     // define a mass
-    bulletTool->setMass(0.01);
+    bulletTool->setMass(0.100); // JONAS
 
     // estimate tool's inertia properties
     bulletTool->estimateInertia();
@@ -502,7 +502,7 @@ int main(int argc, char* argv[])
     bulletTool->setMaterial(toolMat);
 
     // assign linear and angular damping
-    bulletTool->setDamping(1.0, 1.0);
+    bulletTool->setDamping(1.0, 1.0); //JONAS
 
 
     //-----------------------------------------------------------------------
@@ -800,7 +800,7 @@ void updateHaptics(void)
 
         // retrieve simulation time and compute next interval
         double time = simClock.getCurrentTimeSeconds();
-        double nextSimInterval = 0.0005;//cClamp(time, 0.00001, 0.0002);
+        double nextSimInterval = 0.001;//5;//cClamp(time, 0.00001, 0.0002);
         
         // reset clock
         simClock.reset();
@@ -832,7 +832,7 @@ void updateHaptics(void)
         // compute force and torque to apply to tool
         cVector3d force, torque;
         force = linStiffness * deltaPos;
-        bulletTool->addExternalForce(force);
+        bulletTool->addExternalForce(force); // JONAS 0.1*
 
         torque = cMul((angStiffness * angle), axis);
         rotTool.mul(torque);
@@ -841,6 +841,17 @@ void updateHaptics(void)
         // compute force and torque to apply to haptic device
         force = -linG * force;
         torque = -angG * torque;
+
+        cVector3d d = force;
+        double thres = 0.5;
+        double mag = force.length();
+        if(mag<thres) {
+            force.set(0,0,0);
+        } else {
+            mag = mag-thres;
+            d.normalize();
+            force = mag*d;
+        }
 
         // send forces to device
         hapticDevice->setForceAndTorqueAndGripperForce(force, torque, 0.0);

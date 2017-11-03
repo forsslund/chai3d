@@ -65,7 +65,7 @@ cBulletWorld::cBulletWorld()
     m_integrationTimeStep = 0.001;
 
     // maximum number of iterations
-    m_integrationMaxIterations = 5;
+    m_integrationMaxIterations = 15; //JONAS
 
     // setup broad phase collision detection
     m_bulletBroadphase = new btDbvtBroadphase();
