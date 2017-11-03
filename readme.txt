@@ -1,4 +1,34 @@
 
+CHAI3D-WoodenHaptics branch (work in progress)
+------------------------------------------------
+
+Quick installation instructions:
+ 1. Install Ubuntu 16.04
+ 2. Install the proprietary nvidia graphics drivers via the "additional driver" tool
+ 3. sudo apt install git
+ 4. git clone https://github.com/forsslund/chai3d.git
+ 5. sudo apt install libhidapi-dev libudev-dev libusb-1.0-0-dev libasound2-dev freeglut3-dev \
+    build-essential cmake libudev-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+    qt5-default 
+ 6. cd chai3d
+ 7. cmake .
+ 8. make -j5
+
+Examples are then found in bin/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 CHAI3D - The Open Source Haptic Framework
 -----------------------------------------
