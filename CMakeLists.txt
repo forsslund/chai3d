@@ -191,6 +191,55 @@ endforeach ()
 # build flags
 add_definitions (${PROJECT_DEFINITIONS} -DGLEW_STATIC -DAL_ALEXT_PROTOTYPES -DAL_BUILD_LIBRARY -DAL_LIBTYPE_STATIC -D__THEORA -D_LIB)
 
+###############################################################
+# JONAS TRYING TO ADD LINKING AGAINST BOOST
+if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
+    SET(BOOST "C:/boost_1_63_0")
+    SET(DR "release")  # Change to debug if debug...
+    SET(VS_VER "14")
+    include_directories (${BOOST})
+    SET(A "${BOOST}/bin.v2/libs")
+    SET(B "/build/msvc-${VS_VER}.0/${DR}/address-model-64/link-static/threading-multi/")
+    link_directories(${A}/system${B})
+    link_directories(${A}/date_time${B})
+    link_directories(${A}/regex${B})
+    link_directories(${A}/context${B})
+    link_directories(${A}/coroutine${B})
+    link_directories(${A}/thread${B})
+    link_directories(${A}/chrono${B})
+    add_definitions(-DC_ENABLE_WOODEN_DEVICE_SUPPORT)
+    #add_definitions(-DBOOST_ASIO_NO_DEFAULT_LINKED_LIBS)
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/system${B})
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/date_time${B})
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/regex${B})
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/context${B})
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/coroutine${B})
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/thread${B})
+    set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/chrono${B})
+    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} wsock32)
+    #set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
+    #
+    #
+    #  DEFAULT CMAKE WAY (DIDNT WORK)
+    #
+    #set(Boost_USE_STATIC_LIBS ON)
+    #set(Boost_USE_MULTITHREADED ON)
+    #set(Boost_USE_STATIC_RUNTIME ON)
+    #set(Boost_NO_BOOST_CMAKE ON)
+    #set(BOOST_ROOT "C:/boost_1_63_0")
+    #find_package(Boost 1.63.0 COMPONENTS system date_time regex context coroutine thread chrono)
+    #include_directories ("C:/boost_1_63_0")
+    #message(STATUS "Boost includes: " ${Boost_FOUND} ${Boost_INCLUDE_DIR})
+    #set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS}  Boost_INCLUDE_DIRS)#"c:/boost_1_63_0" )
+    #set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} ${Boost_LIBRARIES})# boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
+    #add_definitions(-DC_ENABLE_WOODEN_DEVICE_SUPPORT)
+    #add_definitions(-DBOOST_ASIO_NO_DEFAULT_LINKED_LIBS)
+    #add_definitions(-DWIN32_LEAN_AND_MEAN)
+endif()
+###############################################################
+
+
+
 # static library
 add_library (chai3d STATIC ${source} ${source_hidlib} ${source_eigen} ${source_gif} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora} )
 
@@ -233,10 +282,6 @@ endif ()
 #set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/Qt58/5.8/msvc2015_64/lib" )
 #set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} remotehaptics Qt5Core Qt5Network)
 
-# Windows and Boost
-include_directories ("C:/boost_1_63_0")
-set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} "c:/boost_1_63_0" )
-set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
 
 #add_definitions(-DC_ENABLE_REMOTE_DEVICE_SUPPORT)
 

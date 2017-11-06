@@ -1,5 +1,14 @@
 #ifndef FSHAPTICDEVICETHREAD_H
 #define FSHAPTICDEVICETHREAD_H
+//#define WIN32_LEAN_AND_MEAN
+
+#include <boost/asio.hpp> // Note: pollutes namespace
+#include <boost/thread/mutex.hpp>
+
+// For sleeping
+#include <boost/chrono.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 
 
 
@@ -14,15 +23,6 @@
 
 #include "kinematics.h"
 //#include <chai3d.h>
-#include <boost/asio.hpp> // Note: pollutes namespace
-
-#include <boost/thread/mutex.hpp>
-
-// For sleeping
-#include <boost/chrono.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/interprocess/sync/interprocess_semaphore.hpp>
-
 using namespace std;
 using boost::asio::ip::udp;
 

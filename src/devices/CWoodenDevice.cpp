@@ -56,18 +56,21 @@
 #include <iostream>
 #include <fstream> 
 #include <sstream>
+#ifdef UNIX
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+#endif
 
 // For USB HID version
+#ifdef USB
 #include "hidapi.h"
 #include <stdio.h>
 #include <wchar.h>
 #include <string.h>
 #include <stdlib.h>
 #include "hidapi.h"
-
+#endif
 
 #define FSDEVICE
 //#define USB  // define this to use the usb version
@@ -76,8 +79,7 @@
 //#define SAVE_LOG
 //#define SERIAL  // for reading the orientation
 
-#ifndef USB
-#define SENSORAY
+#ifdef SENSORAY
 #include "../../external/s826/include/826api.h"
 #endif
 
@@ -246,6 +248,7 @@ std::string toJSON(const cWoodenDevice::configuration& c){
 }
 
 void write_config_file(const cWoodenDevice::configuration& config){
+#ifdef UNIX
     const char *homedir;
     if ((homedir = getenv("HOME")) == NULL) {
         homedir = getpwuid(getuid())->pw_dir;
@@ -257,9 +260,11 @@ void write_config_file(const cWoodenDevice::configuration& config){
     ofile.open(std::string(homedir) + "/woodenhaptics.json");
     ofile << toJSON(config);
     ofile.close();
+#endif
 }
 
 cWoodenDevice::configuration read_config_file(){
+#ifdef UNIX
     const char *homedir;
     if ((homedir = getenv("HOME")) == NULL) {
         homedir = getpwuid(getuid())->pw_dir;
@@ -283,6 +288,9 @@ cWoodenDevice::configuration read_config_file(){
         write_config_file(default_woody());
         return default_woody();
     }
+#else
+    return default_woody();
+#endif
 }
 //==============================================================================
 
@@ -498,7 +506,7 @@ bool cWoodenDevice::open()
     result = true; // TODO: Verify
 
     // *** INSERT YOUR CODE HERE ***
-    fs = new FsHapticDeviceThread(false);
+    fs = new FsHapticDevice();
 
 
 

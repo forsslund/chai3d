@@ -55,7 +55,7 @@
 #include <vector>
 
 
-#include "fshapticdevicethread.h"
+#include "fshapticdevice.h"
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -176,7 +176,7 @@ public:
     //! Shared cWoodenDevice allocator.
     static cWoodenDevicePtr create(unsigned int a_deviceNumber = 0) { return (std::make_shared<cWoodenDevice>(a_deviceNumber)); }
 
-    FsHapticDeviceThread* fs;
+    FsHapticDevice* fs;
 
     //--------------------------------------------------------------------------
     // PUBLIC METHODS:

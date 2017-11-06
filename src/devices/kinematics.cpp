@@ -235,9 +235,7 @@ Kinematics::configuration read_config_file(){
         return default_woody();
     }
 #else
-    write_config_file(default_woody());
     return default_woody();
-
 #endif
 }
 //==============================================================================
