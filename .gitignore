@@ -1,4 +1,4 @@
 
 *.user
 external/SixenseSDK_102215*
-
+bin/*
