@@ -195,7 +195,10 @@ add_definitions (${PROJECT_DEFINITIONS} -DGLEW_STATIC -DAL_ALEXT_PROTOTYPES -DAL
 # JONAS TRYING TO ADD LINKING AGAINST BOOST
 if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
     SET(BOOST "C:/boost_1_63_0")
-    SET(DR "release")  # Change to debug if debug...
+    SET(DR "release")
+    IF(CMAKE_BUILD_TYPE MATCHES "Debug")
+        SET(DR "debug")
+    ENDIF(CMAKE_BUILD_TYPE MATCHES "Debug")
     SET(VS_VER "14")
     include_directories (${BOOST})
     SET(A "${BOOST}/bin.v2/libs")
@@ -217,6 +220,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
     set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/thread${B})
     set (CHAI3D_LIBRARY_DIRS ${CHAI3D_LIBRARY_DIRS} ${A}/chrono${B})
     set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} wsock32)
+    message("BOOST SYSTEM: " ${A}/system${B})
     #set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} boost_system boost_date_time boost_regex boost_context boost_coroutine boost_thread boost_chrono)
     #
     #

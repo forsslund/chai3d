@@ -1,4 +1,5 @@
-
 *.user
 external/SixenseSDK_102215*
 bin/*
+modules/build-*
+modules/BULLET/bin*
