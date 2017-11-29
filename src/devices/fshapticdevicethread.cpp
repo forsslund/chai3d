@@ -86,6 +86,9 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
         latestEnc[0]=ch_a;
         latestEnc[1]=ch_b;
         latestEnc[2]=ch_c;
+        latestEnc[3]=rot[0];
+        latestEnc[4]=rot[1];
+        latestEnc[5]=rot[2];
         mtx_pos.unlock();
     }
 
@@ -201,18 +204,14 @@ FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message, Kinematic
     std::cout << "FsHapticDeviceThread::FsHapticDeviceThread()\n";
     app_start = chrono::steady_clock::now();
 
-    io_service = new boost::asio::io_service();
-
-    latestEnc[0]=0;
-    latestEnc[1]=0;
-    latestEnc[2]=0;
-
-
+    for(int i=0;i<6;++i)
+        latestEnc[i]=0;
 
 }
 
 void FsHapticDeviceThread::thread()
 {
+  io_service = new boost::asio::io_service();
 
   try {
     server(*io_service, 47111);

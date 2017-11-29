@@ -4,6 +4,8 @@
 //#include <chai3d.h>
 //using namespace chai3d;
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 
 struct fsVec3d {
@@ -47,6 +49,24 @@ struct fsRot {
 
     //fsRot(double m[][3]){ for(int i=0;i<9;++i)(double*)(r[i])=(double*)(m);}
 };
+
+inline std::string toString(const fsVec3d& r){
+   std::stringstream ss;
+   ss.precision(3);
+   ss.setf(std::ios::fixed);
+   ss << std::setw(6) << r.m_x << " " << std::setw(6) << r.m_y << " " << std::setw(6) << r.m_z;
+   return ss.str();
+}
+inline std::string toString(const fsRot& r){
+   std::stringstream ss;
+   ss.precision(3);
+   ss.setf(std::ios::fixed);
+   ss << std::setw(6) << r.m[0][0] << " " << std::setw(6) << r.m[0][1] << " " << std::setw(6) << r.m[0][2] << "\n";
+   ss << std::setw(6) << r.m[1][0] << " " << std::setw(6) << r.m[1][1] << " " << std::setw(6) << r.m[1][2] << "\n";
+   ss << std::setw(6) << r.m[2][0] << " " << std::setw(6) << r.m[2][1] << " " << std::setw(6) << r.m[2][2] << "\n";
+   return ss.str();
+}
+
 inline fsRot operator*(const fsRot& a, const fsRot& b) {
     fsRot c;
     int i,j,m;
