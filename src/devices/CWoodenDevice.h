@@ -76,7 +76,7 @@ namespace chai3d {
 class cWoodenDevice;
 typedef std::shared_ptr<cWoodenDevice> cWoodenDevicePtr;
 
-
+#ifdef OLD
 // Our 12*4=48 byte message (used both up and down)
 struct woodenhaptics_message {
     float position_x;
@@ -113,7 +113,7 @@ struct pc_to_hid_message {  // 4*2 = 8 bytes
     short current_motor_c_mA;
     short debug;
 };
-
+#endif
 //------------------------------------------------------------------------------
 
 //==============================================================================
@@ -176,7 +176,7 @@ public:
     //! Shared cWoodenDevice allocator.
     static cWoodenDevicePtr create(unsigned int a_deviceNumber = 0) { return (std::make_shared<cWoodenDevice>(a_deviceNumber)); }
 
-    FsHapticDevice* fs;
+    FsHapticDevice* fs=0;
 
     //--------------------------------------------------------------------------
     // PUBLIC METHODS:
@@ -210,11 +210,12 @@ public:
 
 
     //! Public methods to read special info from the wooden device (for developers)
+#ifdef OLD
     cVector3d getTorqueSignals() { return torqueSignals; }
     cVector3d getEncoders() { return cVector3d(incoming_msg.temperature_0,
                                                incoming_msg.temperature_1,
                                                incoming_msg.temperature_2);}
-
+#endif
 
     //--------------------------------------------------------------------------
     // PUBLIC STATIC METHODS:
@@ -225,7 +226,7 @@ public:
     //! Returns the number of devices available from this class of device.
     static unsigned int getNumDevices();
 
-
+#ifdef OLD
     //! A collection of variables that can be set in ~/wooden_haptics.json 
     struct configuration {
         double variant;                 // 0=WoodenHaptics default, 1=AluHaptics
@@ -275,6 +276,7 @@ public:
 
         configuration(){}
     };
+#endif
 
 
     //--------------------------------------------------------------------------
@@ -294,15 +296,18 @@ public:
 
 protected:
 
-    const configuration m_config;
 
     cVector3d torqueSignals;
+#ifdef OLD
+    const configuration m_config;
 
     woodenhaptics_message incoming_msg;
     woodenhaptics_message outgoing_msg;
 
     hid_to_pc_message hid_to_pc;
     pc_to_hid_message pc_to_hid;
+#endif
+
     cVector3d latest_position;
     cVector3d latest_force;
     cVector3d latest_motor_torques;
@@ -310,6 +315,7 @@ protected:
     std::chrono::steady_clock::time_point start;
     std::chrono::steady_clock::time_point start_of_app;
 
+#ifdef OLD
     // Log
     std::vector<cVector3d> forces;
     std::vector<cVector3d> positions;
@@ -330,12 +336,13 @@ protected:
 
     // for serial
     int fd;
+#endif
 
 
 public:
 
 
-
+#ifdef OLD
 
     struct woodenhaptics_status {
         hid_to_pc_message latest_hid_to_pc;
@@ -429,6 +436,7 @@ public:
         s.latest_force = latest_force;
         s.latest_motor_torques = latest_motor_torques;
     }
+#endif
 };
 
 //------------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 
 //#include <chai3d.h>
 //using namespace chai3d;
+#include <string>
 
 
 struct fsVec3d {
@@ -85,7 +86,6 @@ struct woodenhaptics_message {
 class Kinematics
 {
 public:
-    Kinematics();
 
     fsVec3d computePosition(int ch_a, int ch_b, int ch_c){ int enc[3] = {ch_a,ch_b,ch_c}; return computePosition(enc); }
     fsVec3d computePosition(int* encoderValues); // encoders[3]
@@ -128,8 +128,10 @@ public:
         double g_constant;              // m/s^2 usually 9.81 or 0 to
                                         //       disable gravity compensation
 
+        std::string name;
+
         // Set values
-        configuration(const double* k):
+        configuration(const double* k, std::string name="unnamed variant"):
           variant(k[0]),
           diameter_capstan_a(k[1]), diameter_capstan_b(k[2]), diameter_capstan_c(k[3]),
           length_body_a(k[4]), length_body_b(k[5]), length_body_c(k[6]),
@@ -140,12 +142,53 @@ public:
           current_for_10_v_signal(k[17]), cpr_encoder_a(k[18]), cpr_encoder_b(k[19]),
           cpr_encoder_c(k[20]), max_linear_force(k[21]), max_linear_stiffness(k[22]),
           max_linear_damping(k[23]), mass_body_b(k[24]), mass_body_c(k[25]),
-          length_cm_body_b(k[26]), length_cm_body_c(k[27]), g_constant(k[28]){}
+          length_cm_body_b(k[26]), length_cm_body_c(k[27]), g_constant(k[28]), name(name){}
 
         configuration(){}
+
+        // Some configurations (won't require to use the filesystem)
+        static configuration woodenhaptics_v2015() {
+            double data[] = { 0, 0.010, 0.010, 0.010,
+                              0.080, 0.205, 0.245,
+                              0.160, 0.120, 0.120,
+                              0.220, 0.000, 0.080, 0.100,
+                              0.0259, 0.0259, 0.0259, 3.0, 2000, 2000, 2000,
+                              5.0, 1000.0, 8.0,
+                              0.170, 0.110, 0.051, 0.091, 0};
+            return Kinematics::configuration(data,"woodenhaptics_v2015 hardcoded");
+        }
+
+        static configuration aluhaptics_v2() {
+            double data[] = { 1, 0.0138, 0.0098, 0.0098,
+                              0.111, 0.140, 0.111,
+                              0.116, 0.076, 0.076,
+                              0.140, 0.000, 0.000, 0.100,
+                              0.0259, 0.0259, 0.0259, 3.0, 2000, 2000, 2000,
+                              5.0, 1000.0, 8.0,
+                              0.170, 0.110, 0.051, 0.091, 0};
+            return Kinematics::configuration(data,"aluhaptics_v2 hardcoded");
+        }
+
+        static configuration vintage() {
+            double data[] = { 1, 0.013, 0.010, 0.010,
+                              0.056, 0.138, 0.112,
+                              0.117, 0.077, 0.077,
+                              0.140, 0.000, 0.000, 0.100,
+                              0.0163, 0.0163, 0.0163, 3.0, 4000, 4000, 4000,
+                              5.0, 800.0, 8.0,
+                              0.170, 0.110, 0.051, 0.091, 0};
+            return Kinematics::configuration(data, "vintage hardcoded");
+        }
     };
+
+    Kinematics();
+    Kinematics(configuration c):m_config(c) {}
+
 
     const configuration m_config;
 };
+
+std::string toJSON(const Kinematics::configuration& c);
+Kinematics::configuration fromJSON(std::string json);
 
 #endif // KINEMATICS_H

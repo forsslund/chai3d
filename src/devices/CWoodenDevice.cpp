@@ -125,7 +125,7 @@ namespace chai3d {
 //------------------------------------------------------------------------------
 
 
-
+#ifdef OLD
 
 
 std::string toJSON(const woodenhaptics_message& m) {
@@ -293,7 +293,7 @@ cWoodenDevice::configuration read_config_file(){
 #endif
 }
 //==============================================================================
-
+#endif
 
 
 //==============================================================================
@@ -301,11 +301,14 @@ cWoodenDevice::configuration read_config_file(){
     Constructor of cWoodenDevice.
 */
 //==============================================================================
-cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber): 
-    m_config(read_config_file())
+cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber)
 {
     // the connection to your device has not yet been established.
     m_deviceReady = false;
+
+    fs = new FsHapticDevice();
+
+#ifdef OLD
     lost_messages = 0;
 
     for(int i=0;i<3;++i)
@@ -332,6 +335,8 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     std::cout << std::endl << "WoodenHaptics configuration used: " << std::endl 
               << toJSON(m_config) << std::endl; 
 
+#endif
+
     // haptic device model (see file "CGenericHapticDevice.h")
     m_specifications.m_model                         = C_HAPTIC_DEVICE_WOODEN;
 
@@ -339,7 +344,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     m_specifications.m_manufacturerName              = "KTH and Stanford University";
 
     // name of your device
-    m_specifications.m_modelName                     = "WoodenHaptics";
+    m_specifications.m_modelName                     = fs->getConfig().name;
 
 
     //--------------------------------------------------------------------------
@@ -347,7 +352,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     //--------------------------------------------------------------------------
 
     // the maximum force [N] the device can produce along the x,y,z axis.
-    m_specifications.m_maxLinearForce                = m_config.max_linear_force;     // [N]
+    m_specifications.m_maxLinearForce                = fs->getConfig().max_linear_force;     // [N]
 
     // the maximum amount of torque your device can provide arround its
     // rotation degrees of freedom.
@@ -358,7 +363,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     m_specifications.m_maxGripperForce               = 3.0;     // [N]
 
     // the maximum closed loop linear stiffness in [N/m] along the x,y,z axis
-    m_specifications.m_maxLinearStiffness             = m_config.max_linear_stiffness; // [N/m]
+    m_specifications.m_maxLinearStiffness             = fs->getConfig().max_linear_stiffness; // [N/m]
 
     // the maximum amount of angular stiffness
     m_specifications.m_maxAngularStiffness            = 1.0;    // [N*m/Rad]
@@ -367,7 +372,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     m_specifications.m_maxGripperLinearStiffness      = 1000;   // [N*m]
 
     // the radius of the physical workspace of the device (x,y,z axis)
-    m_specifications.m_workspaceRadius                = m_config.workspace_radius;     // [m]
+    m_specifications.m_workspaceRadius                = fs->getConfig().workspace_radius;     // [m]
 
     // the maximum opening angle of the gripper
     m_specifications.m_gripperMaxAngleRad             = cDegToRad(30.0);
@@ -385,7 +390,7 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
     ////////////////////////////////////////////////////////////////////////////
     
     // Maximum recommended linear damping factor Kv
-    m_specifications.m_maxLinearDamping			      = m_config.max_linear_damping;   // [N/(m/s)]
+    m_specifications.m_maxLinearDamping			      = fs->getConfig().max_linear_damping;   // [N/(m/s)]
 
     //! Maximum recommended angular damping factor Kv (if actuated torques are available)
     m_specifications.m_maxAngularDamping			  = 0.0;	  // [N*m/(Rad/s)]
@@ -462,11 +467,13 @@ cWoodenDevice::cWoodenDevice(unsigned int a_deviceNumber):
 //==============================================================================
 cWoodenDevice::~cWoodenDevice()
 {
+    std::cout<<"~cWoodenDevice()\n";
     // close connection to device
     if (m_deviceReady)
     {
         close();
     }
+    if(fs) delete fs;
 }
 
 
@@ -505,10 +512,9 @@ bool cWoodenDevice::open()
     bool result = C_ERROR; // this value will need to become "C_SUCCESS" for the device to be marked as ready.
     result = true; // TODO: Verify
 
+    fs->open();
+
     // *** INSERT YOUR CODE HERE ***
-    fs = new FsHapticDevice();
-
-
 
     // update device status
     if (result)

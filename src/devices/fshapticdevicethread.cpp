@@ -161,13 +161,13 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
 
 
     // Cap at 2A since Escons 24/4 cant do more than that for 4s
-    if(out.milliamps_motor_a >= 2000) out.milliamps_motor_a = 1999;
-    if(out.milliamps_motor_b >= 2000) out.milliamps_motor_b = 1999;
-    if(out.milliamps_motor_c >= 2000) out.milliamps_motor_c = 1999;
+    if(out.milliamps_motor_a >= max_milliamps) out.milliamps_motor_a = max_milliamps-1;
+    if(out.milliamps_motor_b >= max_milliamps) out.milliamps_motor_b = max_milliamps-1;
+    if(out.milliamps_motor_c >= max_milliamps) out.milliamps_motor_c = max_milliamps-1;
 
-    if(out.milliamps_motor_a <= -2000) out.milliamps_motor_a = -1999;
-    if(out.milliamps_motor_b <= -2000) out.milliamps_motor_b = -1999;
-    if(out.milliamps_motor_c <= -2000) out.milliamps_motor_c = -1999;
+    if(out.milliamps_motor_a <= -max_milliamps) out.milliamps_motor_a = -max_milliamps;
+    if(out.milliamps_motor_b <= -max_milliamps) out.milliamps_motor_b = -max_milliamps;
+    if(out.milliamps_motor_c <= -max_milliamps) out.milliamps_motor_c = -max_milliamps;
 
 
     //std::cout << "Force: " << f.x() << ", " << f.y() << ", " << f.z() << "\n";
@@ -195,15 +195,13 @@ void FsHapticDeviceThread::server(boost::asio::io_service& io_service, unsigned 
 }
 }
 
-FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message):
-    sem_force_sent(0),newforce(false),wait_for_next_message(wait_for_next_message)
+FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message, Kinematics::configuration c):
+    sem_force_sent(0),newforce(false),wait_for_next_message(wait_for_next_message), kinematics(Kinematics(c))
 {
+    std::cout << "FsHapticDeviceThread::FsHapticDeviceThread()\n";
     app_start = chrono::steady_clock::now();
 
     io_service = new boost::asio::io_service();
-
-    boost::thread* m_thread;
-    m_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::thread, this));
 
     latestEnc[0]=0;
     latestEnc[1]=0;
@@ -216,19 +214,12 @@ FsHapticDeviceThread::FsHapticDeviceThread(bool wait_for_next_message):
 void FsHapticDeviceThread::thread()
 {
 
-
-  try
-  {
-
-
-
+  try {
     server(*io_service, 47111);
-
   }
-  catch (std::exception& e)
-  {
-    std::cerr << "Exception: " << e.what() << "\n";
-    }
+  catch (std::exception& e){
+    std::cerr << "Exception in FsHapticDeviceThread::thread(): " << e.what() << "\n";
+  }
 
 }
 

@@ -10,7 +10,6 @@
 #include <sstream>
 #include <cmath>
 
-//#define UNIX
 #ifdef UNIX
 namespace unix {
     // Following includes are only used for reading/writing config file and to find
@@ -235,7 +234,9 @@ Kinematics::configuration read_config_file(){
         return default_woody();
     }
 #else
+    write_config_file(default_woody());
     return default_woody();
+
 #endif
 }
 //==============================================================================
@@ -286,7 +287,6 @@ fsVec3d Kinematics::computeMotorAmps(fsVec3d force, int *encoderValues)
 
     const pose p = calculate_pose(m_config, encoderValues);
 
-    const double& Ln = p.Ln;
     const double& Lb = p.Lb;
     const double& Lc = p.Lc;
     const double& tA = p.tA;
@@ -372,9 +372,6 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
     // From compute pos -------------------
     pose p  = calculate_pose(m_config, encBase);
 
-    const double& Ln = p.Ln;
-    const double& Lb = p.Lb;
-    const double& Lc = p.Lc;
     const double& tA = p.tA;
     double tB = p.tB;
     double tC = p.tC;
@@ -383,10 +380,6 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
         tB = tB + 3.141592/2;
     else
         tC = -tC + 3.141592/2;
-
-    double x = cos(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_x;
-    double y = sin(tA)*(Lb*sin(tB)+Lc*sin(tC)) - m_config.workspace_origin_y;
-    double z = Ln+Lb*cos(tB)-Lc*cos(tC)        - m_config.workspace_origin_z;
     // -------------------------------------------
 
     fsRot r;

@@ -45,7 +45,6 @@
 #ifndef CRemoteDeviceH
 #define CRemoteDeviceH
 //------------------------------------------------------------------------------
-#define C_ENABLE_REMOTE_DEVICE_SUPPORT
 #if defined(C_ENABLE_REMOTE_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
 #include "devices/CGenericHapticDevice.h"

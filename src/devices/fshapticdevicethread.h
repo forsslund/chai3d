@@ -1,14 +1,5 @@
 #ifndef FSHAPTICDEVICETHREAD_H
 #define FSHAPTICDEVICETHREAD_H
-//#define WIN32_LEAN_AND_MEAN
-
-#include <boost/asio.hpp> // Note: pollutes namespace
-#include <boost/thread/mutex.hpp>
-
-// For sleeping
-#include <boost/chrono.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 
 
 
@@ -23,6 +14,15 @@
 
 #include "kinematics.h"
 //#include <chai3d.h>
+#include <boost/asio.hpp> // Note: pollutes namespace
+
+#include <boost/thread/mutex.hpp>
+
+// For sleeping
+#include <boost/chrono.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
+
 using namespace std;
 using boost::asio::ip::udp;
 
@@ -33,10 +33,15 @@ using boost::asio::ip::udp;
 class FsHapticDeviceThread
 {
 public:
-    FsHapticDeviceThread(bool wait_for_next_message=false);
+    FsHapticDeviceThread(bool wait_for_next_message=false,
+                         Kinematics::configuration c=Kinematics::configuration::woodenhaptics_v2015());
     void server(boost::asio::io_service& io_service, unsigned short port);
     void thread();
+    void open() {     m_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::thread, this)); }
 
+    boost::interprocess::interprocess_semaphore sem_force_sent;
+    bool newforce;
+    const bool wait_for_next_message;
     Kinematics kinematics;
     chrono::steady_clock::time_point app_start;
 
@@ -48,10 +53,6 @@ public:
 
     boost::mutex mtx_pos;
     boost::mutex mtx_force;
-    boost::interprocess::interprocess_semaphore sem_force_sent;
-    bool newforce;
-
-    const bool wait_for_next_message;
 
     inline fsVec3d getPos() {
         mtx_pos.lock();
@@ -160,9 +161,12 @@ public:
 
     boost::asio::io_service* io_service;
 
+    int max_milliamps = 2000;
 
 
 
+
+    boost::thread* m_thread = 0;
 
 
 

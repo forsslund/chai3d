@@ -8,10 +8,13 @@ class FsHapticDevice
 {
 public:
     FsHapticDevice();
+    ~FsHapticDevice();
     fsVec3d getPos();
     fsRot getRot();
     void setForce(fsVec3d f);
-    FsHapticDeviceThread *fsthread;
+    FsHapticDeviceThread *fsthread=0;
+    Kinematics::configuration getConfig();
+    void open();
 };
 
 #endif // FSHAPTICDEVICE_H
