@@ -64,8 +64,12 @@ namespace chai3d {
 //==============================================================================
 cBulletStaticPlane::cBulletStaticPlane(cBulletWorld* a_world,
     const cVector3d& a_planeNormal,
-    const double& a_planeConstant) : cBulletMesh(a_world) 
+    const double& a_planeConstant, int col_group, int col_filter) : cBulletMesh(a_world)
 { 
+
+    m_bulletGroup = col_group;
+    m_bulletMask  = col_filter;
+
     // set dimensions
     m_planeNormal = a_planeNormal;
     m_planeConstant = a_planeConstant;
@@ -91,7 +95,7 @@ cBulletStaticPlane::cBulletStaticPlane(cBulletWorld* a_world,
     m_bulletRigidBody = new btRigidBody(rigidBodyCI);
 
     // add bullet rigid body to bullet world
-    m_dynamicWorld->m_bulletWorld->addRigidBody(m_bulletRigidBody);
+    m_dynamicWorld->m_bulletWorld->addRigidBody(m_bulletRigidBody,m_bulletGroup,m_bulletMask);
 }
 
 

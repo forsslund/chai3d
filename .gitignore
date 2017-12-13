@@ -3,3 +3,4 @@ CMakeLists.txt.user
 *.exe
 *.manifest
 modules/build-*
+*.pdb

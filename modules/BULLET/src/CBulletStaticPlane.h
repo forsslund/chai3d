@@ -85,7 +85,8 @@ public:
     //! Constructor of cBulletStaticPlane.
     cBulletStaticPlane(cBulletWorld* a_world,
         const cVector3d& a_planeNormal,
-        const double& a_planeConstant);
+        const double& a_planeConstant,
+                       int col_group=-1, int col_filter=-1);
 
     //! Destructor of cBulletStaticPlane.
     // \todo actually implement destructor

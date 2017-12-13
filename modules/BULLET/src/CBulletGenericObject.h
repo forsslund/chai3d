@@ -216,6 +216,10 @@ public:
     //! Bullet motion state.
     btDefaultMotionState* m_bulletMotionState;
 
+    //! Bullet collision filtering group and mask (defaults to no filtering).
+    //! Change before calling buildDynamicModel()
+    int m_bulletGroup = -1;
+    int m_bulletMask = -1;
 
     //--------------------------------------------------------------------------
     // PROTECTED METHODS:

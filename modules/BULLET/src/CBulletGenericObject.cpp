@@ -205,7 +205,7 @@ void cBulletGenericObject::buildDynamicModel()
     m_bulletRigidBody->setSleepingThresholds(0, 0);
 
     // add bullet rigid body to bullet world
-    m_dynamicWorld->m_bulletWorld->addRigidBody(m_bulletRigidBody);
+    m_dynamicWorld->m_bulletWorld->addRigidBody(m_bulletRigidBody, m_bulletGroup, m_bulletMask);
 }
 
 
