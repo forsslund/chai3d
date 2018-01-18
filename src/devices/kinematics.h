@@ -178,6 +178,17 @@ public:
             return Kinematics::configuration(data,"woodenhaptics_v2015 hardcoded");
         }
 
+        static configuration polhem_v1() {
+            double data[] = { 2, 0.010, 0.010, 0.010,
+                              0.058, 0.174, 0.133,
+                              0.180, 0.100, 0.100,
+                              0.140, 0.000, 0.100, 0.100,
+                              0.0259, 0.0259, 0.0259, 3.0, 2000, 2000, 2000,
+                              5.0, 800.0, 8.0,
+                              0.080, 0.080, 0.040, 0.070, 9.81};
+            return Kinematics::configuration(data,"polhem_v1 hardcoded");
+        }
+
         static configuration aluhaptics_v2() {
             double data[] = { 1, 0.0138, 0.0098, 0.0098,
                               0.111, 0.140, 0.111,

@@ -255,6 +255,7 @@ fsVec3d Kinematics::computePosition(int *encoderValues)
         encoderValues[1] = -encoderValues[1];
         encoderValues[2] = -encoderValues[2];
     }
+
     pose p  = calculate_pose(m_config, encoderValues);
 
 
@@ -342,8 +343,8 @@ fsVec3d Kinematics::computeMotorAmps(fsVec3d force, int *encoderValues)
     }
     if(int(m_config.variant) == 2){ // RAMTIN
         motorTorque[0] = -motorTorque[0];
-        motorTorque[1] = -motorTorque[1];
-        motorTorque[2] = -motorTorque[2];
+        motorTorque[1] = motorTorque[1];
+        motorTorque[2] = motorTorque[2];
     }
 
 
@@ -385,11 +386,10 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
     fsRot r;
     r.identity();
 
-#define VINTAGE
-#ifdef VINTAGE
+if(m_config.variant == 1){ // Vintage
     double tD = -encRot[0]*2*pi/2000.0;
-    double tE = -encRot[1]*2*pi/2000.0;
-    double tF = -encRot[2]*2*pi/2000.0;
+    double tE = encRot[1]*2*pi/2000.0;
+    double tF = encRot[2]*2*pi/2000.0;
 
     // rotate about z (body a)
     fsRot rA;
@@ -413,12 +413,12 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
     fsRot rF;
     rF.rot_x(tF);
     r =  rA*rB*rC*rD*rE*rF;
-#endif
+}
 
-#ifdef RAMTIN
-    double tD = encRot[0]*2*pi/4096.0;
-    double tE = -encRot[1]*2*pi/4096.0;
-    double tF = encRot[2]*2*pi/4096.0;
+if(m_config.variant == 2){ // Ramtin/Polhem
+    double tD = -encRot[2]*2*pi/1024.0;
+    double tE = encRot[1]*2*pi/1024.0;
+    double tF = encRot[0]*2*pi/1024.0;
 
     // rotate about z (body a)
     fsRot rA;
@@ -442,7 +442,7 @@ fsRot Kinematics::computeRotation(int* encBase, int* encRot)
     fsRot rF;
     rF.rot_x(tF);
     r =  rA*rB*rC*rD*rE *rF;
-#endif
+}
 
     return r;
 }

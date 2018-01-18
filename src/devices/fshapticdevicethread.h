@@ -36,7 +36,7 @@ public:
     FsHapticDeviceThread(bool wait_for_next_message=false,
                          Kinematics::configuration c=Kinematics::configuration::woodenhaptics_v2015());
     void server(boost::asio::io_service& io_service, unsigned short port);
-    void thread();
+    virtual void thread();
     void open() {     m_thread = new boost::thread(boost::bind(&FsHapticDeviceThread::thread, this)); }
 
     boost::interprocess::interprocess_semaphore sem_force_sent;

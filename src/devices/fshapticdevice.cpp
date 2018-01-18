@@ -3,9 +3,10 @@
 
 FsHapticDevice::FsHapticDevice()
 {
+    Kinematics::configuration c = Kinematics::configuration::polhem_v1();
     //Kinematics::configuration c = Kinematics::configuration::woodenhaptics_v2015();
     //Kinematics::configuration c = Kinematics::configuration::aluhaptics_v2();
-    Kinematics::configuration c = Kinematics::configuration::vintage();
+    //Kinematics::configuration c = Kinematics::configuration::vintage();
 
     // Should the thread block and wait for at least one new position message before continue? (may improve stability)
     bool wait_for_next_message = true;
