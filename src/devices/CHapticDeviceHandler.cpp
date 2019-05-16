@@ -68,6 +68,10 @@
 #include "devices/CSixenseDevices.h"
 #endif
 
+#if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
+#include "devices/CHaptikfabrikenDevice.h"
+#endif
+
 #if defined(C_ENABLE_CUSTOM_DEVICE_SUPPORT)
 #include "devices/CMyCustomDevice.h"
 #endif
@@ -211,6 +215,25 @@ void cHapticDeviceHandler::update()
     for (int i=0; i<count; i++)
     {
         device = cPhantomDevice::create(i);
+        m_devices[m_numDevices] = device;
+        m_numDevices++;
+    }
+
+    #endif
+
+
+    //--------------------------------------------------------------------------
+    // search for Haptikfabriken devices
+    //--------------------------------------------------------------------------
+    #if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
+
+    // check for how many devices are available for this class of devices
+    count = cHaptikfabrikenDevice::getNumDevices(); // Note: Will always return 1
+
+    // open all remaining devices
+    for (int i=0; i<count; i++)
+    {
+        device = cHaptikfabrikenDevice::create(i);
         m_devices[m_numDevices] = device;
         m_numDevices++;
     }

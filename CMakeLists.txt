@@ -210,6 +210,15 @@ endif ()
 set (CHAI3D_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 
 
+# Haptikfabriken API
+# If installed it resides in /usr/local/include/haptikfabrikenapi.h
+# and                        /usr/local/lib/libhaptikfabrikenapi.so
+# It itself depends on lib826 and usb-1.0 but those we don't need to link to.
+if (${OS} MATCHES lin)
+  set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} haptikfabrikenapi )
+  add_definitions(-DC_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
+endif ()
+
 #
 # optional extras
 #
