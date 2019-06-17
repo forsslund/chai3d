@@ -218,6 +218,32 @@ if (${OS} MATCHES lin)
   set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} haptikfabrikenapi )
   add_definitions(-DC_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
 endif ()
+if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
+  set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} haptikfabrikenapi s826)
+  add_definitions(-DC_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
+  include_directories("${PROJECT_SOURCE_DIR}/external/haptikfabrikenapi")
+  link_directories("${PROJECT_SOURCE_DIR}/external/haptikfabrikenapi")
+
+  set(Boost_DEBUG on)
+  set(BOOST_ROOT "f:/boost_1_62_0")
+  set(BOOST_LIBRARYDIR "f:/boost_1_62_0/stage/lib")
+  #set(BOOST_LIBRARYDIR "f:/boost_1_62_0/stage/lib")
+  #FIND_PACKAGE( Boost 1.62 COMPONENTS REQUIRED system )
+  INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+  #set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES}  ${Boost_LIBRARIES}  )
+  link_directories("f:/boost_1_6_2/stage/lib")
+  set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES}
+      libboost_system-vc140-mt-1_62
+      libboost_date_time-vc140-mt-1_62
+      libboost_regex-vc140-mt-1_62
+      libboost_context-vc140-mt-1_62
+      libboost_coroutine-vc140-mt-1_62
+      libboost_thread-vc140-mt-1_62
+      libboost_chrono-vc140-mt-1_62
+      Setupapi)
+endif()
+
+
 
 #
 # optional extras
