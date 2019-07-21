@@ -383,7 +383,9 @@ int main(int argc, char* argv[])
     double workspaceScaleFactor = tool->getWorkspaceScaleFactor();
 
     // stiffness properties
-    double maxStiffness	= hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
+    double maxStiffness	= 3*hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
+    std::cout << "Maxstiffness " << maxStiffness << std::endl;
+
 
 
     /////////////////////////////////////////////////////////////////////////
@@ -411,7 +413,7 @@ int main(int argc, char* argv[])
 
     // set material properties
     base->m_material->setGrayGainsboro();
-    base->m_material->setStiffness(0.5 * maxStiffness);
+    base->m_material->setStiffness(1.0 * maxStiffness);
 
     // build collision detection tree
     base->createAABBCollisionDetector(toolRadius);
@@ -443,7 +445,7 @@ int main(int argc, char* argv[])
 
     // set material properties
     teaPot->m_material->setRedDark();
-    teaPot->m_material->setStiffness(0.5 * maxStiffness);
+    teaPot->m_material->setStiffness(1.0 * maxStiffness);
 
     // build collision detection tree
     teaPot->createAABBCollisionDetector(toolRadius);
@@ -475,7 +477,7 @@ int main(int argc, char* argv[])
 
     // set material properties
     cylinder->m_material->setBlueCornflower();
-    cylinder->m_material->setStiffness(0.5 * maxStiffness);
+    cylinder->m_material->setStiffness(1.0 * maxStiffness);
 
     // build collision detection tree
     cylinder->createAABBCollisionDetector(toolRadius);
@@ -510,7 +512,7 @@ int main(int argc, char* argv[])
 
     // set material properties
     cone->m_material->setGreenForest();
-    cone->m_material->setStiffness(0.5 * maxStiffness);
+    cone->m_material->setStiffness(1.0 * maxStiffness);
 
     // build collision detection tree
     cone->createAABBCollisionDetector(toolRadius);
@@ -559,7 +561,7 @@ int main(int argc, char* argv[])
     }
 
     // set haptic properties
-    segments->m_material->setStiffness(0.5 * maxStiffness);
+    segments->m_material->setStiffness(1.0 * maxStiffness);
 
     // position object
     segments->setLocalPos(0.22,-0.22, 0.0);
