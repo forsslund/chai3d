@@ -383,8 +383,7 @@ int main(int argc, char* argv[])
     double workspaceScaleFactor = tool->getWorkspaceScaleFactor();
 
     // stiffness properties
-    double maxStiffness	= 3*hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
-    std::cout << "Maxstiffness " << maxStiffness << std::endl;
+    double maxStiffness	= hapticDeviceInfo.m_maxLinearStiffness / workspaceScaleFactor;
 
 
 

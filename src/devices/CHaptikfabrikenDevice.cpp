@@ -131,7 +131,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_maxGripperLinearStiffness      = 1000;   // [N*m]
 
     // the radius of the physical workspace of the device (x,y,z axis)
-    m_specifications.m_workspaceRadius                = 0.2;     // [m]
+    m_specifications.m_workspaceRadius                = 0.1;     // [m]
 
     // the maximum opening angle of the gripper
     m_specifications.m_gripperMaxAngleRad             = cDegToRad(30.0);
@@ -149,7 +149,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     ////////////////////////////////////////////////////////////////////////////
     
     // Maximum recommended linear damping factor Kv
-    m_specifications.m_maxLinearDamping             = 20.0;   // [N/(m/s)]
+    m_specifications.m_maxLinearDamping             = 2.0;   // [N/(m/s)]
 
     //! Maximum recommended angular damping factor Kv (if actuated torques are available)
     m_specifications.m_maxAngularDamping            = 0.0;    // [N*m/(Rad/s)]
@@ -214,8 +214,8 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
         
 
     // Specify which kinematics model and communication protocol to use here.
-    Kinematics::configuration c = Kinematics::configuration::polhem_v2();
-    HaptikfabrikenInterface::Protocol p = HaptikfabrikenInterface::DAQ;
+    Kinematics::configuration c = Kinematics::configuration::polhem_v3();
+    HaptikfabrikenInterface::Protocol p = HaptikfabrikenInterface::USB;
     if(!hfab) // Only allow one instance
         hfab = new HaptikfabrikenInterface(false, c, p);
 
@@ -252,8 +252,8 @@ bool cHaptikfabrikenDevice::open()
     // check if the system is available
     if (!m_deviceAvailable) return (C_ERROR);
 
-    // if system is already opened then return
-    if (m_deviceReady) return (C_ERROR);
+    // if system is already opened then return success!
+    if (m_deviceReady) return (C_SUCCESS);
 
     ////////////////////////////////////////////////////////////////////////////
     /*
@@ -442,7 +442,7 @@ bool cHaptikfabrikenDevice::getPosition(cVector3d& a_position)
     double x,y,z;
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
-    fsVec3d p = hfab->getPos();
+    fsVec3d p = hfab->getPos(true);
 
     x = p.x();
     y = p.y();
