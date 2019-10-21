@@ -122,7 +122,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_maxGripperForce                = 3.0;     // [N]
 
     // the maximum closed loop linear stiffness in [N/m] along the x,y,z axis
-    m_specifications.m_maxLinearStiffness             = 1000.0; // [N/m]
+    m_specifications.m_maxLinearStiffness             = 3500.0; // [N/m]
 
     // the maximum amount of angular stiffness
     m_specifications.m_maxAngularStiffness            = 1.0;    // [N*m/Rad]
@@ -149,7 +149,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     ////////////////////////////////////////////////////////////////////////////
     
     // Maximum recommended linear damping factor Kv
-    m_specifications.m_maxLinearDamping             = 2.0;   // [N/(m/s)]
+    m_specifications.m_maxLinearDamping             = 3.0;   // [N/(m/s)]
 
     //! Maximum recommended angular damping factor Kv (if actuated torques are available)
     m_specifications.m_maxAngularDamping            = 0.0;    // [N*m/(Rad/s)]

@@ -41,6 +41,14 @@ struct fsRot {
             for(int j=0;j<3;++j)
                 this->m[i][j] = m[i][j];
     }
+    fsRot(std::initializer_list<double> list){   // To initalize with list e.g.
+        auto iter = list.begin();                //    fsRot r{1,2,3,
+        for(int i=0;i<3;++i)                     //            4,5,6,
+            for(int j=0;j<3;++j){                //            7,8,9};
+                m[i][j]=*iter;
+                iter++;
+            }
+    }
     void identity();
     void rot_x(double t);
     void rot_y(double t);
@@ -287,10 +295,10 @@ public:
         static configuration woodenhaptics_v2015() {
             double data[] = { 0, 0.010, 0.010, 0.010,
                               0.080, 0.205, 0.245,
-                              0.160, 0.120, 0.120,
+                              0.120, 0.120, 0.120,
                               0.220, 0.000, 0.080, 0.100,
-                              0.0259, 0.0259, 0.0259, 3.0, 2000, 2000, 2000,0,0,0,
-                              5.0, 1000.0, 8.0,
+                              0.0538, 0.0259, 0.0259, 5.0, 4000, 2000, 2000,0,0,0,
+                              25.0, 1000.0, 8.0,
                               0.170, 0.110, 0.051, 0.091, 0,
                               0,0,6000,0,0,0,
                               0,0,0,0,0,0};
@@ -312,16 +320,30 @@ public:
 
 
         static configuration polhem_v2() {
-            double data[] = { 3, 0.0288, 0.0077, 0.010,
+            double data[] = { 3, 0.0288, 0.0130, 0.010, // 3, 0.0288,0.0077,0.010 originally
                               0.1, 0.165, 0.1308,
                               0.175, 0.100, 0.100,
-                              -0.137, 0.182, -0.0217, 0.150,
+//                              -0.137, 0.182, -0.0217, 0.150,
+                              0.137, 0, 0, 0.150,
                               0.321, 0.0538, 0.0538, 3.0, 4096, 4096, 4096,1024,1024,1024,
-                              5.0, 2000.0, 1.0,
+                              5.0, 5000.0, 1.0,
                               0.0, 0.0, 0.0, 0.0, 0,
-                              -8327,-18447,27140,0,30,0,
+                              8327,-10926,27140,0,30,0, // second was -18477
                               0,1,0,0,0,0};
             return Kinematics::configuration(data,"polhem_v2 hardcoded");
+        }
+
+        static configuration polhem_v3() {
+            double data[] = { 3, 0.0288, 0.0130, 0.010,
+                              0.1, 0.165, 0.1308,
+                              0.175, 0.100, 0.100,
+                              0.2045, 0.0, 0.0325, 0.150, // 0.137 0 0 0.150
+                              0.0603, 0.0538, 0.0538, 3.0, 4096, 4096, 4096,1024,1024,1024, // 0.321
+                              5.0, 2000.0, 1.0,
+                              0.0, 0.0, 0.0, 0.0, 0,
+                              8327,-10926,27140,0,30,0,
+                              0,1,0,0,0,0};
+            return Kinematics::configuration(data,"polhem_v3 hardcoded");
         }
 
         static configuration aluhaptics_v2() {
@@ -364,19 +386,48 @@ public:
 std::string toJSON(const Kinematics::configuration& c);
 Kinematics::configuration fromJSON(std::string json);
 
-
-
-
-
+// Forward declare
 class FsHapticDeviceThread;
+class HaptikfabrikenInterface;
 
+// Haptic values as passed to event handlers
+struct HapticValues {
+    fsVec3d position;
+    fsMatrix3 orientation;
+    fsVec3d currentForce;
+    fsVec3d nextForce; // Will be output to device
+};
+
+/*
+ *  Class for haptic event listener
+ *  Example:
+ *    class MyClass : public HapticListener {
+ *           positionEvent(HapticValues hv){
+ *               fsVec3d f = -100 * hv.position;
+ *               hfab->setForce(f);
+ *           }
+ *
+ *           MyClass(){
+ *               HaptikfabrikenInterface* hfab = new HaptikfabrikenInterface();
+ *               hfab->open();
+ *               hfab->addEventListener(this);
+ *           }
+ *    }
+ *
+ */
+class HapticListener {
+public:
+    virtual void positionEvent(HapticValues&) = 0;
+    virtual ~HapticListener(){}
+    int maxHapticListenerFrequency{15000};
+};
 
 class HaptikfabrikenInterface {
 public:
     enum Protocol {DAQ,UDP,USB};
 
     HaptikfabrikenInterface(bool wait_for_next_message=false,
-                            Kinematics::configuration c=Kinematics::configuration::polhem_v2(),
+                            Kinematics::configuration c=Kinematics::configuration::polhem_v3(),
                             Protocol protocol=DAQ);
     ~HaptikfabrikenInterface();
 
@@ -395,14 +446,18 @@ public:
     int getNumSentMessages(); // usb communications statistics
     int getNumReceivedMessages();
 
-    fsVec3d getPos();              // Get cartesian coords xyz using kineamtics model
+    fsVec3d getPos(bool blocking=false);              // Get cartesian coords xyz using kineamtics model
     fsRot getRot();                // Get orientaion of manipulandum
+    fsVec3d getCurrentForce();              // Get last applied force
     void setForce(fsVec3d f);      // Set force using kineamtics model, e.g. in xyz
     void setCurrent(fsVec3d amps); // Set the 3 motor amps directly (not cartesian coords.)
     std::bitset<5> getSwitchesState();
 
     void calibrate();              // Sets encoders (or offset if read-only, e.g. usb)
                                    // to the defined values in kinematic model as home position.
+
+    void addEventListener(HapticListener* listener);
+    void removeEventListener(HapticListener* listener);
 
     const Kinematics::configuration kinematicModel;
 
