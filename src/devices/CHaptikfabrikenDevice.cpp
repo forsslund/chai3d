@@ -122,7 +122,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_maxGripperForce                = 3.0;     // [N]
 
     // the maximum closed loop linear stiffness in [N/m] along the x,y,z axis
-    m_specifications.m_maxLinearStiffness             = 3500.0; // [N/m]
+    m_specifications.m_maxLinearStiffness             = 2500.0; // [N/m] // 3500 on desktop
 
     // the maximum amount of angular stiffness
     m_specifications.m_maxAngularStiffness            = 1.0;    // [N*m/Rad]
