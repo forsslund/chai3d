@@ -40,6 +40,7 @@
 #
 # configuration
 #
+#set(CMAKE_BUILD_TYPE "Debug")
 
 cmake_minimum_required (VERSION 3.0.0)
 project (CHAI3D)
