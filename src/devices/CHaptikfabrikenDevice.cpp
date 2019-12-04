@@ -214,7 +214,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
         
 
     // Specify which kinematics model and communication protocol to use here.
-    Kinematics::configuration c = Kinematics::configuration::polhem_v3();
+    Kinematics::configuration c = Kinematics::configuration::woodenhaptics_v2019();
     HaptikfabrikenInterface::Protocol p = HaptikfabrikenInterface::USB;
     if(!hfab) // Only allow one instance
         hfab = new HaptikfabrikenInterface(false, c, p);
