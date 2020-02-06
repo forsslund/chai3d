@@ -122,7 +122,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_maxGripperForce                = 3.0;     // [N]
 
     // the maximum closed loop linear stiffness in [N/m] along the x,y,z axis
-    m_specifications.m_maxLinearStiffness             = 800.0; // [N/m]
+    m_specifications.m_maxLinearStiffness             = 2500.0; // [N/m] // 3500 on desktop
 
     // the maximum amount of angular stiffness
     m_specifications.m_maxAngularStiffness            = 1.0;    // [N*m/Rad]
@@ -131,7 +131,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_maxGripperLinearStiffness      = 1000;   // [N*m]
 
     // the radius of the physical workspace of the device (x,y,z axis)
-    m_specifications.m_workspaceRadius                = 0.15;     // [m]
+    m_specifications.m_workspaceRadius                = 0.1;     // [m]
 
     // the maximum opening angle of the gripper
     m_specifications.m_gripperMaxAngleRad             = cDegToRad(30.0);
@@ -214,10 +214,10 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
         
 
     // Specify which kinematics model and communication protocol to use here.
-    Kinematics::configuration c = Kinematics::configuration::woodenhaptics_v2019();
+    Kinematics::configuration c = Kinematics::configuration::polhem_v3();
     HaptikfabrikenInterface::Protocol p = HaptikfabrikenInterface::USB;
     if(!hfab) // Only allow one instance
-        hfab = new HaptikfabrikenInterface(false, c, p);
+        hfab = new HaptikfabrikenInterface(c, p);
 
     m_deviceAvailable = true; // this value should become 'true' when the device is available.
 }
@@ -252,8 +252,8 @@ bool cHaptikfabrikenDevice::open()
     // check if the system is available
     if (!m_deviceAvailable) return (C_ERROR);
 
-    // if system is already opened then return
-    if (m_deviceReady) return (C_ERROR);
+    // if system is already opened then return success!
+    if (m_deviceReady) return (C_SUCCESS);
 
     ////////////////////////////////////////////////////////////////////////////
     /*
@@ -398,8 +398,8 @@ unsigned int cHaptikfabrikenDevice::getNumDevices()
     ////////////////////////////////////////////////////////////////////////////
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
+    int numberOfDevices = HaptikfabrikenInterface::findUSBSerialDevices();  // At least set to 1 if a device is available.
 
-    int numberOfDevices = 1;  // At least set to 1 if a device is available.
 
     // numberOfDevices = getNumberOfDevicesConnectedToTheComputer();
 
