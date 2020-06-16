@@ -1,3 +1,18 @@
+RemoteHaptics Branch 2020-06-16
+-----------------------------------------
+CHAI3D - The Open Source Haptic Framework
+-----------------------------------------
+Edit your CMakeLists.txt to your qt path e.g.
+set (CMAKE_PREFIX_PATH "c:\\Qt\\Qt5.14.2\\5.14.2\\msvc2017_64\\")
+
+Make sure you have Qt dlls in your path e.g: 
+C:\Qt\Qt5.14.2\5.14.2\msvc2017_64\bin
+
+
+
+
+
+
 
 
 CHAI3D - The Open Source Haptic Framework
