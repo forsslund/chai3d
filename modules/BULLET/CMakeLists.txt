@@ -178,9 +178,6 @@ endforeach ()
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
   add_definitions ("-DDEBUG")
 endif ()
-if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-  add_definitions ("-DUSE_X86_64_ASM")
-endif ()
 
 # static library
 add_library (chai3d-BULLET STATIC ${source} ${source_collision} ${source_dynamics} ${source_softbody} ${source_linearmath} )
