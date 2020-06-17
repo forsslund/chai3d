@@ -219,14 +219,14 @@ if (EXISTS ${PROJECT_SOURCE_DIR}/extras/GLFW)
   add_subdirectory (${PROJECT_SOURCE_DIR}/extras/GLFW)
 endif ()
 
-set (CMAKE_PREFIX_PATH "c:\\Qt\\Qt5.14.2\\5.14.2\\msvc2017_64\\")
+set (CMAKE_PREFIX_PATH "c:\\Qt\\Qt5.15.0\\msvc2019_64\\")
 # look for RemoteHaptics library
 #find_library(REMOTEHAPTICS remotehaptics)
 #if(REMOTEHAPTICS)
     find_package(Qt5 COMPONENTS Core Network REQUIRED)
     message("Configuring with RemoteHaptics support")
-    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} ${PROJECT_SOURCE_DIR}/external/remotehaptics/remotehaptics.lib ${Qt5Core_LIBRARIES} ${Qt5Network_LIBRARIES} )
-    list(APPEND CHAI3D_DEPENDS ${PROJECT_SOURCE_DIR}/external/remotehaptics/remotehaptics.lib ${Qt5Core_LIBRARIES} ${Qt5Network_LIBRARIES} )
+    set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} ${PROJECT_SOURCE_DIR}/external/remotehaptics/release/remotehaptics.lib ${Qt5Core_LIBRARIES} ${Qt5Network_LIBRARIES} )
+    list(APPEND CHAI3D_DEPENDS ${PROJECT_SOURCE_DIR}/external/remotehaptics/release/remotehaptics.lib ${Qt5Core_LIBRARIES} ${Qt5Network_LIBRARIES} )
     list(APPEND CHAI3D_DEFINITIONS -DC_ENABLE_REMOTE_DEVICE_SUPPORT)
 #endif()
 

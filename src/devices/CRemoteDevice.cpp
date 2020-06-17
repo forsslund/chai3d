@@ -271,7 +271,7 @@ namespace chai3d {
         if (!m_deviceAvailable) return (C_ERROR);
 
         // if system is already opened then return
-        if (m_deviceReady) return (C_ERROR);
+        if (m_deviceReady) return (C_SUCCESS);
 
         ////////////////////////////////////////////////////////////////////////////
         /*
