@@ -46,9 +46,12 @@
 #include "system/CGlobals.h"
 #include "devices/CHaptikfabrikenDevice.h"
 //------------------------------------------------------------------------------
-#if defined(C_ENABLE_CUSTOM_DEVICE_SUPPORT)
+#if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
-#include <haptikfabrikenapi.h>
+#ifdef WIN32
+    #define WINDOWS
+#endif
+#include "uhaptikfabriken.h"
 using namespace haptikfabriken;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -100,10 +103,10 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_model                         = C_HAPTIC_DEVICE_HAPTIKFABRIKEN;
 
     // name of the device manufacturer, research lab, university.
-    m_specifications.m_manufacturerName              = "Haptikfabriken/KTH/Stanford";
+    m_specifications.m_manufacturerName              = "Haptikfabriken";
 
     // name of your device
-    m_specifications.m_modelName                     = "Woodenhaptics/Polhem/Vintage";
+    m_specifications.m_modelName                     = "Polhem 2020-10-29";
 
 
     //--------------------------------------------------------------------------
@@ -214,10 +217,8 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
         
 
     // Specify which kinematics model and communication protocol to use here.
-    Kinematics::configuration c = Kinematics::configuration::polhem_v3();
-    HaptikfabrikenInterface::Protocol p = HaptikfabrikenInterface::USB;
     if(!hfab) // Only allow one instance
-        hfab = new HaptikfabrikenInterface(c, p);
+        hfab = new HaptikfabrikenInterface();
 
     m_deviceAvailable = true; // this value should become 'true' when the device is available.
 }
@@ -365,7 +366,7 @@ bool cHaptikfabrikenDevice::calibrate(bool a_forceCalibration)
     // *** INSERT YOUR CODE HERE ***
 
     // error = calibrateMyDevice()
-    hfab->calibrate();
+    //hfab->calibrate();
 
     return (result);
 }
@@ -442,7 +443,7 @@ bool cHaptikfabrikenDevice::getPosition(cVector3d& a_position)
     double x,y,z;
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
-    fsVec3d p = hfab->getPos(true);
+    fsVec3d p = hfab->getPos();
 
     x = p.x();
     y = p.y();
@@ -662,8 +663,8 @@ bool cHaptikfabrikenDevice::getUserSwitches(unsigned int& a_userSwitches)
     ////////////////////////////////////////////////////////////////////////////
 
     // *** INSERT YOUR CODE HERE ***
-    std::bitset<5> b = hfab->getSwitchesState();
-    a_userSwitches = (unsigned int)(b.to_ulong());
+    //std::bitset<5> b = hfab->getSwitchesState();
+    //a_userSwitches = (unsigned int)(b.to_ulong());
     //a_userSwitches = 0;
 
 

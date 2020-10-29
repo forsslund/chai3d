@@ -48,7 +48,9 @@
 #if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
 #include "devices/CGenericHapticDevice.h"
-#include <haptikfabrikenapi.h>
+namespace haptikfabriken {
+    class HaptikfabrikenInterface;
+}
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
