@@ -80,6 +80,8 @@ namespace chai3d {
 //==============================================================================
 cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0)
 {
+    cPrint("cHaptikfabrikenDevice constructor\n");
+
     // the connection to your device has not yet been established.
     m_deviceReady = false;
 
@@ -106,7 +108,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_manufacturerName              = "Haptikfabriken";
 
     // name of your device
-    m_specifications.m_modelName                     = "Polhem 2020-10-29";
+    m_specifications.m_modelName                     = std::string("Polhem ")+haptikfabriken::version;
 
 
     //--------------------------------------------------------------------------
