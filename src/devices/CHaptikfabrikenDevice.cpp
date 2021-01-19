@@ -665,9 +665,8 @@ bool cHaptikfabrikenDevice::getUserSwitches(unsigned int& a_userSwitches)
     ////////////////////////////////////////////////////////////////////////////
 
     // *** INSERT YOUR CODE HERE ***
-    //std::bitset<5> b = hfab->getSwitchesState();
-    //a_userSwitches = (unsigned int)(b.to_ulong());
-    //a_userSwitches = 0;
+    std::bitset<5> b = hfab->getSwitchesState();
+    a_userSwitches = (unsigned int)(b.to_ulong());    
 
 
     return (C_SUCCESS);
