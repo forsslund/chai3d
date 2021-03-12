@@ -43,15 +43,17 @@
 
 
 //------------------------------------------------------------------------------
-#include "system/CGlobals.h"
-#include "devices/CHaptikfabrikenDevice.h"
+
 //------------------------------------------------------------------------------
 #if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
 #ifdef WIN32
-    #define WINDOWS
+#define WINDOWS
 #endif
-#include "uhaptikfabriken.h"
+#include "uhaptikfabriken.h" // Note: with httplib we have to include this before 
+                             // any risk of including windows.h
+#include "system/CGlobals.h"
+#include "devices/CHaptikfabrikenDevice.h"
 using namespace haptikfabriken;
 
 ////////////////////////////////////////////////////////////////////////////////
