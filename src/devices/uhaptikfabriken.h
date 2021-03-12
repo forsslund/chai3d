@@ -8,10 +8,13 @@
 #endif
 //#define DUMMY_DEVICE
 //#define VERBOSE
-//#define USE_BT_PROXY_WIN
+#define USE_BT_PROXY_WIN
 
 #ifdef  USE_BT_PROXY_WIN
 #include "devices/httplib.h"
+#include <sstream>
+#include <thread>
+#include <chrono>
 #endif
 
 namespace haptikfabriken {
@@ -633,10 +636,23 @@ public:
     int open(std::string port=serialport_name); // Returns 0 if success
     void close();
 
+#ifdef USE_BT_PROXY_WIN
+    std::thread* t;
+    bool run_t{ true };
+    void httpProxyThread() {
+        while (run_t) {
+            auto res = cli->Get("/stylus1");
+            sscanf(res->body.c_str(), "%d %d", &bt_btn, &tF_count);
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+#endif
+
     HaptikfabrikenInterface() {
 #ifdef USE_BT_PROXY_WIN
         std::cout << "HaptikfabrikenInterface() created. \n";
-        cli = new httplib::Client("http://127.0.0.1:8080");
+        cli = new httplib::Client("http://192.168.1.49:8181");
+        t = new std::thread(&HaptikfabrikenInterface::httpProxyThread, this);
 #endif
     }
 
@@ -680,6 +696,7 @@ private:
 #endif
 #ifdef USE_BT_PROXY_WIN
     httplib::Client *cli;
+    int bt_btn, tF_count;
 #endif
 
 };
@@ -688,10 +705,10 @@ std::string HaptikfabrikenInterface::serialport_name;
 
 unsigned int HaptikfabrikenInterface::findUSBSerialDevices(){
 #ifdef WINDOWS
-    std::string candidates[]={"COM1","COM2","COM3","COM4","COM5",
+    std::string candidates[]={"COM2","COM3","COM4","COM5",
                               "COM6","COM7","COM8","COM9","COM10"};
     int found_available_devices = 0;
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 9; ++i) {
         PORTTYPE fd = open_port_and_set_baud_or_die(candidates[i].c_str(), BAUD);
         if (fd != INVALID_HANDLE_VALUE) {
             serialport_name = candidates[i];
@@ -801,6 +818,9 @@ std::bitset<5> HaptikfabrikenInterface::getSwitchesState(){
         errExit("recvfrom");   
     btn = resp[0]&0x80;
 #endif    
+#ifdef USE_BT_PROXY_WIN
+    btn = bt_btn;
+#endif
     std::bitset<5> switches;
     switches[0]=btn;
     return switches;
@@ -832,8 +852,8 @@ fsRot HaptikfabrikenInterface::getRot(){
 #endif
 
 #ifdef USE_BT_PROXY_WIN
-    auto res = cli->Get("/set");
-    if (res->body == "Thanks!") tF = 3.1415 / 2;
+    tF = -2 * 3.1415926535897 * tF_count / 1024;
+    tF += 3.1415926535897; // Define stylus button facing ceiling as up/default position
 #endif
 
     //printf("Response %02x %02x n: %d btn: %d\n", resp[0],resp[1], tE_count, btn);
