@@ -2,6 +2,7 @@
 #define UHAPTIKFABRIKEN_H
 
 #include <iostream>
+#include <bitset>
 #ifdef LINUX
 #define USE_BT_PROXY
 #endif
@@ -104,6 +105,7 @@ constexpr int buf_len = 64;
 #include <errno.h>      /* Declares errno and defines error constants */
 // -------------------------------------------------
 #endif
+
 
 
 
@@ -640,7 +642,7 @@ public:
 
     // If error, get error message here
     std::string getErrorCode();
-     
+
 
     // Get/set methods (thread safe, gets latest known values and sets next to be commanded)
     //void getEnc(int a[]);  // Array of 6 elements will be filled with signed encoder values
@@ -653,7 +655,7 @@ public:
     fsRot getRot();                // Get orientaion of manipulandum
     fsVec3d getCurrentForce();              // Get last applied force
     void setForce(fsVec3d f);      // Set force using kineamtics model, e.g. in xyz
-
+    std::bitset<5> getSwitchesState(); // Get state of up to 5 manipulandum switches (via bt proxy)
     //void addEventListener(HapticListener* listener);
     //void removeEventListener(HapticListener* listener);
 
@@ -787,6 +789,23 @@ fsVec3d HaptikfabrikenInterface::getPos(){
     return fsVec3d(msg.x_mm*0.001,msg.y_mm*0.001,msg.z_mm*0.001);
 }
 
+std::bitset<5> HaptikfabrikenInterface::getSwitchesState(){
+    bool btn = false;
+#ifdef USE_BT_PROXY
+    msgLen = 2;
+    if (sendto(sfd, "ab", msgLen, 0, (struct sockaddr *) &svaddr,
+        sizeof(struct sockaddr_un)) != msgLen)
+        fatal("Could not access bt proxy server. Is it not started?\n");
+    numBytes = recvfrom(sfd, resp, BUF_SIZE, 0, NULL, NULL);
+    if (numBytes == -1)
+        errExit("recvfrom");   
+    btn = resp[0]&0x80;
+#endif    
+    std::bitset<5> switches;
+    switches[0]=btn;
+    return switches;
+}
+
 fsRot HaptikfabrikenInterface::getRot(){
     #ifdef DUMMY_DEVICE
         std::cout << "Dummy device: getRot()\n";
@@ -807,6 +826,7 @@ fsRot HaptikfabrikenInterface::getRot(){
     bool btn = resp[0]&0x80;
     int tF_count = (resp[0]&0x03) << 8 | resp[1]; // 10 bit rotation
     double tF = -2*3.1415926535897*tF_count / 1024;
+    tF +=  3.1415926535897; // Define stylus button facing ceiling as up/default position
 #else
     double tF = 0;
 #endif
