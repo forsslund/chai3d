@@ -46,3 +46,8 @@ extras/GLFW/glfw.lib
 
 
 CMakeLists.txt.user.4.8-pre1
+**/Debug/*
+*.vcxproj
+*.exe
+
+

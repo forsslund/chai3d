@@ -155,9 +155,9 @@ bool cLoadFileOBJ(cMultiMesh* a_object, const std::string& a_filename)
                 }
 
                 // get ambient component:
-                newMesh->m_material->m_ambient.setR(material.m_ambient[0]);
-                newMesh->m_material->m_ambient.setG(material.m_ambient[1]);
-                newMesh->m_material->m_ambient.setB(material.m_ambient[2]);
+                newMesh->m_material->m_ambient.setR(material.m_diffuse[0]); // Blender export 20210317, was m_ambient (but ambient is set to the "metallic" property equally grey)
+                newMesh->m_material->m_ambient.setG(material.m_diffuse[1]);
+                newMesh->m_material->m_ambient.setB(material.m_diffuse[2]);
                 newMesh->m_material->m_ambient.setA(alpha);
 
                 // get diffuse component:
@@ -1106,7 +1106,12 @@ bool cOBJModel::loadMaterialLib(const char a_fileName[],
         {
             // read into current material
             if (fscanf(hFile, "%f", &m_pMaterials[*a_curMaterialIndex].m_alpha) < 0) return(false);
-            m_pMaterials[*a_curMaterialIndex].m_alpha = 1.0 - m_pMaterials[*a_curMaterialIndex].m_alpha;
+            //m_pMaterials[*a_curMaterialIndex].m_alpha = 1.0 - m_pMaterials[*a_curMaterialIndex].m_alpha;
+            // 20210317: Above is wrong interpretation of "d.
+            // This is referred to as being dissolved. Unlike real transparency, the result does not 
+            // depend upon the thickness of the object. A value of 1.0 for "d" is the default and means fully opaque.
+            // https://en.wikipedia.org/wiki/Wavefront_.obj_file
+            // The alpha parameter is a number between 0.0 (fully transparent) and 1.0 (fully opaque)
         }
 
         // opacity

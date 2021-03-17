@@ -831,6 +831,12 @@ void cMaterial::copyTo(cMaterialPtr a_material)
     if (m_flag_audioFrictionPitchOffset)         
         a_material->setAudioFrictionPitchOffset(m_audioFrictionPitchOffset);
 
+    // Added 20210317 to support propagating haptic shading to child objects.
+    if (m_useHapticShading)
+        a_material->setUseHapticShading(true);
+    if (m_useHapticFriction)
+        a_material->setUseHapticFriction(true);
+
     m_ambient.copyTo(a_material->m_ambient);
     m_diffuse.copyTo(a_material->m_diffuse);
     m_specular.copyTo(a_material->m_specular);
