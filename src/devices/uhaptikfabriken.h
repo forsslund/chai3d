@@ -1,24 +1,33 @@
 #ifndef UHAPTIKFABRIKEN_H
 #define UHAPTIKFABRIKEN_H
 
+// Prevents <Windows.h> from #including <Winsock.h>, as we use <Winsock2.h> instead.
+#ifndef _WINSOCKAPI_
+#define DID_DEFINE_WINSOCKAPI
+#define _WINSOCKAPI_
+#endif
+#pragma comment(lib, "ws2_32.lib")
+
 #include <iostream>
 #include <bitset>
+#include <string>
 #ifdef LINUX
 #define USE_BT_PROXY
 #endif
 //#define DUMMY_DEVICE
 //#define VERBOSE
-#define USE_BT_PROXY_WIN
+//#define USE_BT_PROXY_WIN
 
-#ifdef  USE_BT_PROXY_WIN
-#include "devices/httplib.h"
-#include <sstream>
-#include <thread>
-#include <chrono>
+#define USE_BT_SOCKET
+
+
+#ifdef  USE_BT_SOCKET
+#include "devices/SocketClient.h"
+
 #endif
 
 namespace haptikfabriken {
-static const char* version = "0.2 2021-01-13";
+static const char* version = "0.2 2021-03-22";
 constexpr int buf_len = 64;
 }
 
@@ -83,6 +92,10 @@ constexpr int buf_len = 64;
 #include <linux/serial.h>
 #endif
 #elif defined(WINDOWS)
+#ifndef _WINSOCKAPI_
+#define DID_DEFINE_WINSOCKAPI
+#define _WINSOCKAPI_
+#endif
 #include <windows.h>
 #define PORTTYPE HANDLE
 #define BAUD 115200
@@ -95,6 +108,8 @@ constexpr int buf_len = 64;
 #include <iomanip>
 // -----------------------------------------------------------------------------
 
+#include <winsock2.h>
+#include <afunix.h> 
 
 
 #ifdef USE_BT_PROXY
@@ -641,9 +656,18 @@ public:
     bool run_t{ true };
     void httpProxyThread() {
         while (run_t) {
-            auto res = cli->Get("/stylus1");
-            sscanf(res->body.c_str(), "%d %d", &bt_btn, &tF_count);
-            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            try {
+                auto res = cli->Get("/stylus1");
+                if (res != nullptr) {
+                    size_t offsett = 0;
+                    bt_btn = stoi(res->body.substr(offsett), &offsett);
+                    tF_count = stoi(res->body.substr(offsett), &offsett);
+                }              
+                //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            catch(...) {
+
+            }
         }
     }
 #endif
@@ -654,7 +678,11 @@ public:
         cli = new httplib::Client("http://192.168.1.49:8181");
         t = new std::thread(&HaptikfabrikenInterface::httpProxyThread, this);
 #endif
+
+
     }
+
+
 
     // If error, get error message here
     std::string getErrorCode();
@@ -699,6 +727,9 @@ private:
     int bt_btn, tF_count;
 #endif
 
+#ifdef USE_BT_SOCKET
+    SocketClient<uint16_t> btClient;
+#endif
 };
 
 std::string HaptikfabrikenInterface::serialport_name;
@@ -743,7 +774,10 @@ int HaptikfabrikenInterface::open(std::string port){
 
     sc.open(port);
     sc.sendWakeupMessage();
-
+#ifdef USE_BT_SOCKET
+    btClient.Start("/dev/stylus-" + port);
+    std::cout <<"Listening for stylus on " << ("/dev/stylus-" + port)<<std::endl;
+#endif
 #ifdef USE_BT_PROXY    
     // Open BT
     sfd = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -771,6 +805,10 @@ void HaptikfabrikenInterface::close(){
 #endif
 
     sc.close();
+
+#ifdef USE_BT_SOCKET
+    btClient.Shutdown();
+#endif
 }
 
 fsVec3d HaptikfabrikenInterface::getPos(){
@@ -821,6 +859,10 @@ std::bitset<5> HaptikfabrikenInterface::getSwitchesState(){
 #ifdef USE_BT_PROXY_WIN
     btn = bt_btn;
 #endif
+#ifdef USE_BT_SOCKET
+    uint16_t a = btClient.Get();
+    btn = a & 0x80;
+#endif
     std::bitset<5> switches;
     switches[0]=btn;
     return switches;
@@ -852,6 +894,14 @@ fsRot HaptikfabrikenInterface::getRot(){
 #endif
 
 #ifdef USE_BT_PROXY_WIN
+    tF = -2 * 3.1415926535897 * tF_count / 1024;
+    tF += 3.1415926535897; // Define stylus button facing ceiling as up/default position
+#endif
+
+#ifdef USE_BT_SOCKET    
+    uint16_t value = btClient.Get();
+    char* pValue = (char*)&value;
+    int tF_count = (0x03 & pValue[0]) * 256 + pValue[1];
     tF = -2 * 3.1415926535897 * tF_count / 1024;
     tF += 3.1415926535897; // Define stylus button facing ceiling as up/default position
 #endif
