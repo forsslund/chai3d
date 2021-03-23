@@ -1,13 +1,6 @@
 #ifndef UHAPTIKFABRIKEN_H
 #define UHAPTIKFABRIKEN_H
 
-// Prevents <Windows.h> from #including <Winsock.h>, as we use <Winsock2.h> instead.
-#ifndef _WINSOCKAPI_
-#define DID_DEFINE_WINSOCKAPI
-#define _WINSOCKAPI_
-#endif
-#pragma comment(lib, "ws2_32.lib")
-
 #include <iostream>
 #include <bitset>
 #include <string>
@@ -17,17 +10,13 @@
 //#define DUMMY_DEVICE
 //#define VERBOSE
 //#define USE_BT_PROXY_WIN
-
 #define USE_BT_SOCKET
 
 
-#ifdef  USE_BT_SOCKET
-#include "devices/SocketClient.h"
 
-#endif
 
 namespace haptikfabriken {
-static const char* version = "0.2 2021-03-22";
+static const char* version = "0.2 2021-03-23";
 constexpr int buf_len = 64;
 }
 
@@ -35,7 +24,7 @@ constexpr int buf_len = 64;
 // Haptikfabriken micro API v0.2
 //
 // This header-only micro API enables fast interaction with the Polhem haptic
-// device developed by Haptikfabriken (Forsslund Systems AB), over USB.
+// device developed by Haptikfabriken AB, over USB (and Blueetooth, via proxy app).
 //
 // In effect it opens a channel to the virtual serial port and sends forces
 // (in clear text) to be rendered on the device and receives position and
@@ -51,7 +40,8 @@ constexpr int buf_len = 64;
             using namespace haptikfabriken;
 
             HaptikfabrikenInterface hfab;
-            hfab.serialport_name = "COM6";
+            //hfab.serialport_name = "COM6";
+            hfab.findUSBSerialDevices();  // Finds next free COM-port or /dev/ttySx
             hfab.open();
 
             while(true){
@@ -65,6 +55,22 @@ constexpr int buf_len = 64;
         }
 */
 // -----------------------------------------------------------------------------
+
+
+
+
+// -----------------------------------------------------------------------------
+// Bluetooth Socket Proxy (windows only version currently)
+// -----------------------------------------------------------------------------
+#ifdef  USE_BT_SOCKET
+// Prevents <Windows.h> from #including <Winsock.h>, as we use <Winsock2.h> instead.
+#ifndef _WINSOCKAPI_
+#define DID_DEFINE_WINSOCKAPI
+#define _WINSOCKAPI_
+#endif
+#pragma comment(lib, "ws2_32.lib")
+#include "devices/SocketClient.h"
+#endif
 
 
 
@@ -900,10 +906,8 @@ fsRot HaptikfabrikenInterface::getRot(){
 
 #ifdef USE_BT_SOCKET    
     uint16_t value = btClient.Get();
-    char* pValue = (char*)&value;
-    int tF_count = (0x03 & pValue[0]) * 256 + pValue[1];
+    int tF_count = (value & 0x03) << 8 | (value >> 8) & 0xFF;
     tF = -2 * 3.1415926535897 * tF_count / 1024;
-    tF += 3.1415926535897; // Define stylus button facing ceiling as up/default position
 #endif
 
     //printf("Response %02x %02x n: %d btn: %d\n", resp[0],resp[1], tE_count, btn);

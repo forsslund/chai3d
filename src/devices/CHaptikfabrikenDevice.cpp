@@ -110,7 +110,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_manufacturerName              = "Haptikfabriken";
 
     // name of your device
-    m_specifications.m_modelName                     = std::string("Polhem ")+haptikfabriken::version;
+    m_specifications.m_modelName                     = std::string("Polhem ")+haptikfabriken::version + " " + HaptikfabrikenInterface::serialport_name;
 
 
     //--------------------------------------------------------------------------
