@@ -27,6 +27,7 @@ public:
 	}
 	~SocketClient() {
 		stopClient = true;
+		if (listenSocket != INVALID_SOCKET) closesocket(listenSocket);
 		if (listenThread.joinable()) listenThread.join();
 	}
 	
@@ -48,6 +49,7 @@ private:
 	std::mutex dataMutex;	
 	std::thread listenThread;
 	std::string socketPath;
+	SOCKET listenSocket = INVALID_SOCKET;
 };
 
 
@@ -78,7 +80,6 @@ void SocketClient<T>::Listen() {
 	bool connectionLost = false;
 	while (!stopClient) {
 		// Try setting up a connection
-		SOCKET listenSocket = INVALID_SOCKET;
 		listenSocket = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (listenSocket != INVALID_SOCKET) {
 			connected = true;
@@ -93,7 +94,8 @@ void SocketClient<T>::Listen() {
 					// Recive until the whole datapackage is filled
 					int byteCounter = 0;
 					while (byteCounter < dataSize) {
-						// TODO: Check for timeout
+						// Note: blocking, timeout needed in order to reach connectionLost=true (is it necessary?)
+						// if another thread closes connection it returns with 0 immediately however. 
 						int res = recvfrom(listenSocket, &dataBuffer[byteCounter], dataSize - byteCounter, 0, NULL, NULL);
 						if (res < 0) {
 							connectionLost = true;
