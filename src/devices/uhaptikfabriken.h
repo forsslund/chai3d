@@ -7,7 +7,7 @@
 #ifdef LINUX
 #define USE_BT_PROXY
 #endif
-//#define DUMMY_DEVICE
+#define DUMMY_DEVICE
 //#define VERBOSE
 //#define USE_BT_PROXY_WIN
 #define USE_BT_SOCKET
@@ -768,18 +768,19 @@ std::string HaptikfabrikenInterface::getErrorCode() {
 
 int HaptikfabrikenInterface::open(std::string port){
 #ifdef DUMMY_DEVICE
-    std::cout << "Dummy device: open()\n";
-    return 0;
-#endif
+    std::cout << "Dummy device: open("<<port<<")\n";    
+#else
 
     // TODO: Rewrite me, but test now
-#ifdef WINDOWS
-    findUSBSerialDevices(); // Should update serialport_name
-    port = serialport_name;
-#endif
+    #ifdef WINDOWS
+        findUSBSerialDevices(); // Should update serialport_name
+        port = serialport_name;
+    #endif
 
     sc.open(port);
     sc.sendWakeupMessage();
+#endif
+
 #ifdef USE_BT_SOCKET
     btClient.Start("/dev/stylus-" + port);
     std::cout <<"Listening for stylus on " << ("/dev/stylus-" + port)<<std::endl;
@@ -875,12 +876,7 @@ std::bitset<5> HaptikfabrikenInterface::getSwitchesState(){
 }
 
 fsRot HaptikfabrikenInterface::getRot(){
-    #ifdef DUMMY_DEVICE
-        std::cout << "Dummy device: getRot()\n";
-        fsRot r;
-        return r;
-    #endif
-
+    double tF = 0;
     // Get BT
 #ifdef USE_BT_PROXY
     msgLen = 2;
@@ -896,7 +892,7 @@ fsRot HaptikfabrikenInterface::getRot(){
     double tF = -2*3.1415926535897*tF_count / 1024;
     tF +=  3.1415926535897; // Define stylus button facing ceiling as up/default position
 #else
-    double tF = 0;
+
 #endif
 
 #ifdef USE_BT_PROXY_WIN
@@ -918,7 +914,8 @@ fsRot HaptikfabrikenInterface::getRot(){
     rD.rot_x(msg.tD);
     rE.rot_y(msg.tE);
     rF.rot_x(tF);
-    return rA*rC*rD*rE*rF;
+
+    return rA * rC * rD * rE * rF;
 }
 
 void HaptikfabrikenInterface::setForce(fsVec3d f){
