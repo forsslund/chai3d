@@ -76,29 +76,36 @@ void SocketClient<T>::Listen() {
 	struct sockaddr_un addr;
 	int dataSize = sizeof(data);
 	char* dataBuffer = new char[dataSize];
-
-	bool connectionLost = false;
+	
 	while (!stopClient) {
 		// Try setting up a connection
 		listenSocket = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (listenSocket != INVALID_SOCKET) {
 			connected = true;
+
 			memset(&addr, 0, sizeof(struct sockaddr_un));
 			addr.sun_family = AF_UNIX;
 			strncpy_s(addr.sun_path, socketPath.c_str(), sizeof(addr.sun_path) - 1);
 			int res = connect(listenSocket, (struct sockaddr*)&addr, sizeof(struct sockaddr_un));
 			if (res >= 0) {
 				printf("Connected to server \n");
-				while (!stopClient && !connectionLost) {
+				while (!stopClient && connected) {
+					
+					// Block untill activity on socket
+					fd_set set;
+					FD_ZERO(&set);
+					FD_SET(listenSocket, &set);
+					int activity = select(1, &set, NULL, NULL, NULL);
 
 					// Recive until the whole datapackage is filled
 					int byteCounter = 0;
 					while (byteCounter < dataSize) {
+
 						// Note: blocking, timeout needed in order to reach connectionLost=true (is it necessary?)
 						// if another thread closes connection it returns with 0 immediately however. 
 						int res = recvfrom(listenSocket, &dataBuffer[byteCounter], dataSize - byteCounter, 0, NULL, NULL);
-						if (res < 0) {
-							connectionLost = true;
+						if (res <= 0) { // Since there was activity, we should have data, if no data or error code, connection was lost
+							connected = false;
 							break;
 						}
 						else {
