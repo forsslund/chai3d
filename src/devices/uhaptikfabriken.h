@@ -4,13 +4,13 @@
 #include <iostream>
 #include <bitset>
 #include <string>
-#ifdef LINUX
-#define USE_BT_PROXY
-#endif
-#define DUMMY_DEVICE
+//#ifdef LINUX
+//#define USE_BT_PROXY
+//#endif
+//#define DUMMY_DEVICE
 //#define VERBOSE
 //#define USE_BT_PROXY_WIN
-#define USE_BT_SOCKET
+//#define USE_BT_SOCKET
 
 
 
@@ -63,12 +63,6 @@ constexpr int buf_len = 64;
 // Bluetooth Socket Proxy (windows only version currently)
 // -----------------------------------------------------------------------------
 #ifdef  USE_BT_SOCKET
-// Prevents <Windows.h> from #including <Winsock.h>, as we use <Winsock2.h> instead.
-#ifndef _WINSOCKAPI_
-#define DID_DEFINE_WINSOCKAPI
-#define _WINSOCKAPI_
-#endif
-#pragma comment(lib, "ws2_32.lib")
 #include "devices/SocketClient.h"
 #endif
 
@@ -113,9 +107,6 @@ constexpr int buf_len = 64;
 #include <sstream>
 #include <iomanip>
 // -----------------------------------------------------------------------------
-
-#include <winsock2.h>
-#include <afunix.h> 
 
 
 #ifdef USE_BT_PROXY
@@ -782,8 +773,10 @@ int HaptikfabrikenInterface::open(std::string port){
 #endif
 
 #ifdef USE_BT_SOCKET
-    btClient.Start("/dev/stylus-" + port);
-    std::cout <<"Listening for stylus on " << ("/dev/stylus-" + port)<<std::endl;
+    std::string addr = "/tmp/stylus-" + (port.find("/dev/") == std::string::npos? port : port.substr(5));
+
+    btClient.Start(addr);
+    std::cout <<"Listening for stylus on " << addr<<std::endl;
 #endif
 #ifdef USE_BT_PROXY    
     // Open BT

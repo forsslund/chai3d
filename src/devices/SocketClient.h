@@ -1,12 +1,42 @@
 #pragma once
+#ifdef _WIN32 // Defined by MSVC compiler for both 32 and 64 bit platforms
 // Prevents <Windows.h> from #including <Winsock.h>, as we use <Winsock2.h> instead.
 #ifndef _WINSOCKAPI_
 #define DID_DEFINE_WINSOCKAPI
 #define _WINSOCKAPI_
 #endif
+#pragma comment(lib, "ws2_32.lib")
 
 #include <winsock2.h>
 #include <afunix.h>
+#else
+
+// Linux
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+
+#include <errno.h>
+
+#define SOCKET int
+int closesocket(SOCKET s){
+    return close(s);
+}
+void Sleep(int ms){
+    usleep(ms * 1000);
+}
+
+
+/*
+* Below stolen from WinSock2:
+* This is used instead of -1, since the
+* SOCKET type is unsigned.
+*/
+#define INVALID_SOCKET  (SOCKET)(~0)
+#define SOCKET_ERROR            (-1)
+#endif
+
+
 #include <list>
 #include <thread>
 #include <mutex>
@@ -19,11 +49,13 @@ public:
 	SocketClient() : socketPath(""), listenThread() //Default threadummy
 	{
 		// Initialize Winsock
+#ifdef _WIN32
 		int iResult;
 		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
 			printf("WSAStartup failed: %d\n", iResult);
 		}
+#endif
 	}
 	~SocketClient() {
 		stopClient = true;
@@ -42,7 +74,9 @@ public:
 private:
 	void Listen();
 	bool isRunning = false;
-	WSADATA wsaData;
+#ifdef _WIN32
+    WSADATA wsaData{0};
+#endif
 	bool stopClient = false;	
 	bool connected = false;
 	T data = { 0 };
@@ -85,9 +119,13 @@ void SocketClient<T>::Listen() {
 
 			memset(&addr, 0, sizeof(struct sockaddr_un));
 			addr.sun_family = AF_UNIX;
-			strncpy_s(addr.sun_path, socketPath.c_str(), sizeof(addr.sun_path) - 1);
+            strncpy(addr.sun_path, socketPath.c_str(), sizeof(addr.sun_path) - 1);
 			int res = connect(listenSocket, (struct sockaddr*)&addr, sizeof(struct sockaddr_un));
-			if (res >= 0) {
+            if (res==-1){
+                int errsv = errno;
+                printf("somecall() failed with %d\n",errsv);
+            }
+            if (res >= 0) {
 				printf("Connected to server \n");
 				while (!stopClient && connected) {
 					
@@ -127,7 +165,9 @@ void SocketClient<T>::Listen() {
 		}
 		Sleep(100); // Wait before trying again
 	}
+#ifdef _WIN32
 	WSACleanup();
+#endif
 	delete [] dataBuffer;
 	return;
 }
