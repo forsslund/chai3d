@@ -10,7 +10,7 @@
 //#define DUMMY_DEVICE
 //#define VERBOSE
 //#define USE_BT_PROXY_WIN
-//#define USE_BT_SOCKET
+#define USE_BT_SOCKET
 
 
 
