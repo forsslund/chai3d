@@ -82,7 +82,7 @@ namespace chai3d {
 //==============================================================================
 cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0)
 {
-    cPrint("cHaptikfabrikenDevice constructor\n");
+    cPrint("cHaptikfabrikenDevice constructor device: %d\n", a_deviceNumber);
 
     // the connection to your device has not yet been established.
     m_deviceReady = false;
@@ -109,9 +109,11 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     // name of the device manufacturer, research lab, university.
     m_specifications.m_manufacturerName              = "Haptikfabriken";
 
-    // name of your device
-    m_specifications.m_modelName                     = std::string("Polhem ")+haptikfabriken::version + " " + HaptikfabrikenInterface::serialport_name;
+    m_deviceNumber = a_deviceNumber;
 
+    // name of your device
+    if(m_deviceNumber<10)
+        m_specifications.m_modelName                     = std::string("Polhem ")+haptikfabriken::version + " " + HaptikfabrikenInterface::serialport_names[m_deviceNumber];
 
     //--------------------------------------------------------------------------
     // CHARACTERISTICS: (The following values must be positive or equal to zero)
@@ -281,7 +283,7 @@ bool cHaptikfabrikenDevice::open()
 
     // *** INSERT YOUR CODE HERE ***
     // result = openConnectionToMyDevice();
-    result = hfab->open() ? C_ERROR : C_SUCCESS;
+    result = hfab->open(haptikfabriken::HaptikfabrikenInterface::serialport_names[m_deviceNumber]) ? C_ERROR : C_SUCCESS;
 
 
     // update device status

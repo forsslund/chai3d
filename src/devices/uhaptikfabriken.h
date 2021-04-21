@@ -643,6 +643,7 @@ public:
 class HaptikfabrikenInterface {
 public:
     static std::string serialport_name;
+    static std::string serialport_names[10];
     static unsigned int findUSBSerialDevices(); // sets serialport_name
 
     int open(std::string port=serialport_name); // Returns 0 if success
@@ -730,6 +731,7 @@ private:
 };
 
 std::string HaptikfabrikenInterface::serialport_name;
+std::string HaptikfabrikenInterface::serialport_names[10];
 
 unsigned int HaptikfabrikenInterface::findUSBSerialDevices(){
 #ifdef WINDOWS
@@ -741,7 +743,7 @@ unsigned int HaptikfabrikenInterface::findUSBSerialDevices(){
         if (fd != INVALID_HANDLE_VALUE) {
             serialport_name = candidates[i];
             close_port(fd);
-            found_available_devices++;
+            serialport_names[found_available_devices++] = serialport_name;
         }
     }
     return found_available_devices;
@@ -762,10 +764,11 @@ int HaptikfabrikenInterface::open(std::string port){
     std::cout << "Dummy device: open("<<port<<")\n";    
 #else
 
-    // TODO: Rewrite me, but test now
     #ifdef WINDOWS
+    if (port.length() == 0) {
         findUSBSerialDevices(); // Should update serialport_name
         port = serialport_name;
+    }
     #endif
 
     sc.open(port);
