@@ -750,6 +750,7 @@ unsigned int HaptikfabrikenInterface::findUSBSerialDevices(){
 #else
     // TODO: Implement search
     serialport_name = "/dev/ttyACM0";
+    serialport_names[0] = serialport_name;
     return 1;
 #endif
     return 0;
