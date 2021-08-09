@@ -4,13 +4,14 @@
 #include <iostream>
 #include <bitset>
 #include <string>
-//#ifdef LINUX
-//#define USE_BT_PROXY
-//#endif
+
 //#define DUMMY_DEVICE
 //#define VERBOSE
-//#define USE_BT_PROXY_WIN
-#define USE_BT_SOCKET
+
+
+#define USE_BT_SOCKET  
+//#define VINTAGE
+
 
 
 // Changelog:
@@ -713,7 +714,7 @@ int PJRCSerialComm::receive(position_hid_to_pc_message &msg)
     msg.fromChars(buf);
     if(msg.info != last_info){
         last_info=msg.info;
-        std::cout << "New info: " << msg.info << "\n";
+        //std::cout << "New info: " << msg.info << "\n";
     }
     return 0;
 }
@@ -1067,8 +1068,12 @@ fsRot HaptikfabrikenInterface::getRot(){
     int tF_count = (resp[0]&0x03) << 8 | resp[1]; // 10 bit rotation
     double tF = -2*3.1415926535897*tF_count / 1024;
     tF +=  3.1415926535897; // Define stylus button facing ceiling as up/default position
-#else
+#endif
 
+#ifdef VINTAGE
+    // TODO: Add button encoding here as well.
+    int tF_count = msg.info;
+    tF = 2 * 3.1415926535897 * tF_count / 2000;
 #endif
 
 #ifdef USE_BT_PROXY_WIN
@@ -1083,11 +1088,16 @@ fsRot HaptikfabrikenInterface::getRot(){
 #endif
 
     //printf("Response %02x %02x n: %d btn: %d\n", resp[0],resp[1], tE_count, btn);
+    //printf("Response tA: %f  lambda: %f  tD: %f  tE: %f  tF:%f\n", msg.tA, msg.lambda, msg.tD, msg.tE, tF);
 
     fsRot rA, rC, rD, rE, rF;
     rA.rot_z(msg.tA);
     rC.rot_y(-msg.lambda);
+#ifdef VINTAGE
+    rD.rot_z(msg.tD);
+#else
     rD.rot_x(msg.tD);
+#endif
     rE.rot_y(msg.tE);
     rF.rot_x(tF);
 
