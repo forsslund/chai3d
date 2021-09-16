@@ -15,7 +15,7 @@
 
 
 // Changelog:
-// 2021-06-18 merged in SocketClient.h
+// 2021-06-18 merged in SocketClient.hw
 
 namespace haptikfabriken {
 static const char* version = "0.2 2021-06-18";
@@ -1047,6 +1047,13 @@ std::bitset<5> HaptikfabrikenInterface::getSwitchesState(){
     uint16_t a = btClient.Get();
     btn = a & 0x80;
 #endif
+
+#ifdef VINTAGE
+    if (msg.info > 5000) {
+        btn = true;
+    }
+#endif
+
     std::bitset<5> switches;
     switches[0]=btn;
     return switches;
@@ -1071,8 +1078,10 @@ fsRot HaptikfabrikenInterface::getRot(){
 #endif
 
 #ifdef VINTAGE
-    // TODO: Add button encoding here as well.
     int tF_count = msg.info;
+    if (tF_count > 5000) {
+        tF_count -= 5000;
+    }
     tF = 2 * 3.1415926535897 * tF_count / 2000;
 #endif
 
