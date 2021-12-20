@@ -9,8 +9,8 @@
 //#define VERBOSE
 
 
-#define USE_BT_SOCKET  
-//#define VINTAGE
+//#define USE_BT_SOCKET  
+#define VINTAGE
 
 
 
@@ -916,9 +916,9 @@ std::string HaptikfabrikenInterface::serialport_names[10];
 unsigned int HaptikfabrikenInterface::findUSBSerialDevices(){
 #ifdef WINDOWS
     std::string candidates[]={"COM2","COM3","COM4","COM5",
-                              "COM6","COM7","COM8","COM9","COM10"};
+                              "COM6","COM7","COM8","COM9","COM10","COM11","COM12" };
     int found_available_devices = 0;
-    for (int i = 0; i < 9; ++i) {
+    for (int i = 0; i < 11; ++i) {
         PORTTYPE fd = open_port_and_set_baud_or_die(candidates[i].c_str(), BAUD);
         if (fd != INVALID_HANDLE_VALUE) {
             serialport_name = candidates[i];
@@ -1074,7 +1074,6 @@ fsRot HaptikfabrikenInterface::getRot(){
     bool btn = resp[0]&0x80;
     int tF_count = (resp[0]&0x03) << 8 | resp[1]; // 10 bit rotation
     double tF = -2*3.1415926535897*tF_count / 1024;
-    tF +=  3.1415926535897; // Define stylus button facing ceiling as up/default position
 #endif
 
 #ifdef VINTAGE
