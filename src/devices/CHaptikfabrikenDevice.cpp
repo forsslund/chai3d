@@ -50,7 +50,7 @@
 #ifdef WIN32
 #define WINDOWS
 #endif
-#include "uhaptikfabriken.h" // Note: with httplib we have to include this before 
+#include "uhaptikfabriken2.h"// Note: with httplib we have to include this before 
                              // any risk of including windows.h
 #include "system/CGlobals.h"
 #include "devices/CHaptikfabrikenDevice.h"
