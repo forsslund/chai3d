@@ -1,5 +1,6 @@
 #ifndef UHAPTIKFABRIKEN_H
 #define UHAPTIKFABRIKEN_H
+#pragma warning(disable:4996)
 
 #include <iostream>
 #include <bitset>
@@ -8,8 +9,10 @@
 //#define VERBOSE
 #define USE_MSG_INFO_ROTATION
 
-#define LINUX
+#define WINDOWS
 
+#include "hfabmath.h"
+//#include "haptikfabrikenapi.h"
 
 /*
 
@@ -29,8 +32,8 @@
 // 2021-06-18 merged in SocketClient.h
 
 namespace haptikfabriken {
-static const char* version = "0.4 2023-01-04";
-constexpr int buf_len = 64;
+static const char* version = "0.4 2023-01-06";
+constexpr int buf_len = 127;
 }
 
 int total_reads = 0;
@@ -137,6 +140,7 @@ namespace haptikfabriken {
 PORTTYPE open_port_and_set_baud_or_die(const char *name, long baud);
 int transmit_bytes(PORTTYPE port, const char *data, int len);
 int receive_bytes(PORTTYPE port, char *buf, int len);
+int receive_bytes_until_bracket(PORTTYPE port, char *buf);
 void close_port(PORTTYPE port);
 void delay(double sec);
 
@@ -164,10 +168,10 @@ void wait_online(PORTTYPE port)
         printf(".");
         fflush(stdout);
         sprintf(buf,"[0,0,0]");
-        transmit_bytes(port, buf, 7);
+        transmit_bytes(port, buf, 16); // always send at least 16 bytes (at least in windows)
 
-        r = receive_bytes(port, buf, 128);
-        printf("%s\n",r);
+        r = receive_bytes(port, buf, buf_len);
+        printf("%d\n",r);
         if (r > 8) break; // success, device online
     }
     printf("ok\n");
@@ -245,6 +249,108 @@ PORTTYPE open_port_and_set_baud_or_die(const char *name, long baud)
     return fd;
 
 }
+
+
+int successes_before_timeout{ 0 };
+int receive_bytes_until_bracket(PORTTYPE port, char *buf)
+{
+    int count=0;
+    int len=1; // easiset, add more later to speedup?
+#if defined(MACOSX) || defined(LINUX)
+    int r;
+    int retry=0;
+    //char buf[512];
+
+    //if (len > sizeof(buf) || len < 1) return -1;
+    // non-blocking read mode
+    fcntl(port, F_SETFL, fcntl(port, F_GETFL) | O_NONBLOCK);
+    while (count < len) {
+        r = read(port, buf + count, len - count);
+//        total_reads++;
+//        printf("read, r = %d, len = %d, count = %d, (retry %d) (total reads %d)\n", r, len, count, retry, total_reads);
+        if (r < 0 && errno != EAGAIN && errno != EINTR) {
+            //std::cout << "Error receiving bytes (errno " << errno << ")\n";
+            return -1;
+        }
+        else if (r > 0) count += r;
+        else if(retry>500){
+            //std::cout << "no data available right now, must wait\n";
+//            std::cout << "no data available right now, must wait. Errno:  " << errno << ", r: " << r << ", retry: " << retry << ", Total reads: " << total_reads << "\n";
+            // no data available right now, must wait
+            
+            fd_set fds;
+            struct timeval t;
+            FD_ZERO(&fds);
+            FD_SET(port, &fds);
+            t.tv_sec = 0;
+            t.tv_usec = 100;
+            r = select(port+1, &fds, NULL, NULL, &t);
+            //printf("select, r = %d\n", r);
+            if (r < 0) {
+               // printf("Select error: %d\n", r);
+                return -1;
+            }
+            if (r == 0){
+//                printf("Timeout! (count: %d)\n", count);
+                return count; // timeout
+
+            }
+        }
+        retry++;
+        if (retry > 2000) return -100; // no input
+    }
+    fcntl(port, F_SETFL, fcntl(port, F_GETFL) & ~O_NONBLOCK);
+#elif defined(WINDOWS)
+    COMMTIMEOUTS timeout;
+    DWORD n;
+    BOOL r;
+    int waiting=0;
+
+    GetCommTimeouts(port, &timeout);
+    timeout.ReadIntervalTimeout = MAXDWORD; // non-blocking
+    timeout.ReadTotalTimeoutMultiplier = 0;
+    timeout.ReadTotalTimeoutConstant = 0;
+    SetCommTimeouts(port, &timeout);
+    buf[0]=0;
+    while (true) {
+        //r = ReadFile(port, buf + count, len - count, &n, NULL);
+        r = ReadFile(port, buf + count, 64, &n, NULL);
+        bool found = false;
+        for (unsigned int c = 0; c < count + n; ++c)
+            if (buf[c] == ']') found = true;
+        if (found) {
+            // flush
+            //while(n>0)
+            //    ReadFile(port, buf++, 1, &n, NULL);
+            count += n;
+            successes_before_timeout++;
+
+            break;
+        }
+        if (n > 0) count += n;
+        else {
+            if (waiting) {
+#ifdef VERBOSE
+                std::cout << "Windows timeout read... "<< successes_before_timeout << " sucesses before\n";
+#endif
+                successes_before_timeout = 0;
+                break;  // 1 sec timeout
+            }
+            timeout.ReadIntervalTimeout = MAXDWORD;
+            timeout.ReadTotalTimeoutMultiplier = MAXDWORD;
+            timeout.ReadTotalTimeoutConstant = 1000;
+            SetCommTimeouts(port, &timeout);
+            waiting = 1;
+        }
+    }
+#endif
+    return count;
+}
+
+
+
+
+
 
 int receive_bytes(PORTTYPE port, char *buf, int len)
 {
@@ -345,6 +451,45 @@ void close_port(PORTTYPE port)
 }
 
 
+// -----------------------------------------------------------------
+// NEW COMPUTER MESSAGE INTERFACE 
+// -----------------------------------------------------------------
+constexpr int model_polhem_2022_raw = 1;
+struct device_to_pc_message {
+  int model{1};
+  int enc[6];
+  int error_code{0};
+
+  // Returns number of characters, also writes a trailing \0
+  int toChars(char *c) const {
+    return sprintf(c, "[%d,%d,%d,%d,%d,%d,%d,%d]\n", 
+                        model, enc[0], enc[1], enc[2], enc[3], enc[4], enc[5],  error_code);
+  }
+
+  // Returns 1 if success, 0 if fail
+  int fromChars(const char *c){
+      return 8 == sscanf(c, "[%d,%d,%d,%d,%d,%d,%d,%d]", 
+                              &model, &enc[0], &enc[1], &enc[2], &enc[3], &enc[4], &enc[5], &error_code);
+  }
+};
+
+int calls{ 0 };
+struct pc_to_device_message {
+  int ma[3];          // milliamps per motor
+
+  // Returns number of characters, also writes a trailing \0
+  int toChars(char *c) const {
+    return sprintf(c, "[%d,%d,%d]\n", ma[0], ma[1], ma[2]); // calls++ is an option here
+  }
+
+  // Returns 1 if success, 0 if fail
+  int fromChars(const char *c){
+      return 3 == sscanf(c, "[%d,%d,%d]", &ma[0], &ma[1], &ma[2]);
+  }
+};
+// -----------------------------------------------------------------
+
+
 // -----------------------------------------------------------------------------
 // Haptikfabriken code
 // -----------------------------------------------------------------------------
@@ -433,11 +578,13 @@ struct pc_to_hid_message {  // 7*2 = 14 bytes + 1 inital byte always 0
 
 class PJRCSerialComm {
 public:
-    void sendWakeupMessage(){pc_to_hid_message m; send(m);}
+    void sendWakeupMessage(){pc_to_device_message m; send(m);}
     void open(std::string portname);
     void close();
     void send(const pc_to_hid_message& msg);
     int receive(position_hid_to_pc_message& msg);
+    void send(const pc_to_device_message& msg);
+    int receive(device_to_pc_message& msg);
 private:
     PORTTYPE fd;
     short last_info{0};
@@ -457,19 +604,19 @@ void PJRCSerialComm::close(){
     close_port(fd);
 }
 
-void printBuf(char* buf, std::string str, bool header=true){
+void printBuf(char* buf, std::string str, bool header=true, int max_length=0){
     if(header)
         std::cout << str << " [0123456789012345678901234567890123456789012345678901234567890123]\n";
-    std::cout << str << " [";
+    std::cout << str << " \"";
     int i;
-    for(i=0;i<buf_len+1;++i){
+    for(i=0;i<(max_length?max_length:(buf_len+1));++i){
         if(buf[i]==0) { std::cout << "#"; continue; };
         if(buf[i]=='\n') { std::cout << "N"; continue; }
         if(buf[i]=='\r') { std::cout << "R"; continue; }
         if(buf[i]==' ')  { std::cout << "_"; continue; }
         std::cout << buf[i];
     }
-    std::cout << "] Size (including null character): " << i <<"\n";
+    std::cout << "\" Size (including null character): " << i <<"\n";
 }
 
 void PJRCSerialComm::send(const pc_to_hid_message &msg)
@@ -481,6 +628,20 @@ void PJRCSerialComm::send(const pc_to_hid_message &msg)
     //printBuf(buf, " send   ",false);
     //std::cout << "len " << len << "\n";
     transmit_bytes(fd, buf, len);
+}
+
+void PJRCSerialComm::send(const pc_to_device_message &msg)
+{
+    char buf[buf_len+1];
+    memset(buf, '\0', buf_len+1);
+    int len = msg.toChars(buf);
+    //std::cout << len;
+    //printBuf(buf, " send   ",false);
+    //std::cout << "len " << len << "\n";
+#ifdef VERBOSE
+    std::cout << "send " << len << " bytes: " << std::string(buf) << std::endl;
+#endif
+    transmit_bytes(fd, buf, len<16?16:len);
 }
 
 int PJRCSerialComm::receive(position_hid_to_pc_message &msg)
@@ -536,6 +697,24 @@ int PJRCSerialComm::receive(position_hid_to_pc_message &msg)
     return 0;
 }
 
+int PJRCSerialComm::receive(device_to_pc_message &msg)
+{
+    constexpr int len=buf_len;
+    char buf[len+1];
+    memset(buf, '\0', len+1);
+    int n = receive_bytes_until_bracket(fd,buf);
+
+#ifdef VERBOSE
+    std::cout << "n: " << n << "-->" << std::string(buf) << std::endl;
+    if (n == 0) Sleep(10000);
+#endif
+    msg.fromChars(buf);
+    if (msg.error_code)
+        printBuf(buf, "error",false,n);
+    return 0; // success
+}
+
+/*
 struct fsVec3d {
     double m_x,m_y,m_z;
     fsVec3d(double x, double y, double z):m_x(x),m_y(y),m_z(z){}
@@ -600,9 +779,9 @@ inline fsRot operator*(const fsRot& a, const double& b) {
 }
 std::string toString(const fsVec3d& r);
 std::string toString(const fsRot& r);
-
+*/
 // Forward declare
-class HaptikfabrikenInterface;
+//class HaptikfabrikenInterface;
 
 class HaptikfabrikenInterface {
 public:
@@ -643,6 +822,7 @@ public:
 private:
     PJRCSerialComm sc;
     position_hid_to_pc_message msg;
+    device_to_pc_message msg_in;
     fsVec3d lastSentForce;
     int get_minus_send_requests{ 0 };
 
@@ -655,9 +835,9 @@ std::string HaptikfabrikenInterface::serialport_names[10];
 unsigned int HaptikfabrikenInterface::findUSBSerialDevices(){
 #ifdef WINDOWS
     std::string candidates[]={"COM2","COM3","COM4","COM5",
-                              "COM6","COM7","COM8","COM9","COM10"};
+                              "COM6","COM7","COM8","COM9","COM16","COM11","COM12","COM13","COM14","COM15" }; //TODO COM10 wrong
     int found_available_devices = 0;
-    for (int i = 0; i < 9; ++i) {
+    for (int i = 0; i < 14; ++i) {
         PORTTYPE fd = open_port_and_set_baud_or_die(candidates[i].c_str(), BAUD);
         if (fd != INVALID_HANDLE_VALUE) {
             serialport_name = candidates[i];
@@ -710,6 +890,47 @@ void HaptikfabrikenInterface::close(){
 
 }
 
+Kinematics kinematics(Kinematics::configuration::polhem_v3()); // polhem_v3() in haptikfabriken.h!
+constexpr int enc_home[] = { 8312, -10366, 19764, 0, 30, 0 };
+
+position_hid_to_pc_message compute_old_msg(const device_to_pc_message& m) {
+    position_hid_to_pc_message out;
+
+
+
+
+    // receive encoders, put in counter[0]-[5]
+    int counter[] = { m.enc[0],m.enc[1],m.enc[2],m.enc[3],m.enc[4],m.enc[5] };
+
+
+    for (int i = 0; i < 6; ++i)
+        counter[i] += enc_home[i];
+
+    // compute a force
+    //fsVec3d f(0,0,0);
+    const int base[] = { counter[0], counter[1], counter[2] };
+    //fsVec3d amps = kinematics.computeMotorAmps(f, base);     
+
+    
+    fsVec3d p = kinematics.computePosition(base);
+
+    const int rot[] = { counter[3],counter[4],counter[5] };
+
+    volatile double latest_angles[] = { 0,0,0,0 }; // tA,lambda,tD,tE
+    kinematics.computeRotation(base, rot, latest_angles);
+
+    out.tA = latest_angles[0];
+    out.lambda = latest_angles[1];
+    out.tD = latest_angles[2];
+    out.tE = latest_angles[3];
+    out.x_mm = p.m_x * 1000;
+    out.y_mm = p.m_y * 1000;
+    out.z_mm = p.m_z * 1000;
+    
+    return out;
+}
+
+
 fsVec3d HaptikfabrikenInterface::getPos(){
     #ifdef VERBOSE
         std::cout << "HaptikfabrikenInterface::getPos()... ";
@@ -727,7 +948,9 @@ fsVec3d HaptikfabrikenInterface::getPos(){
     #ifdef DUMMY_DEVICE
         return fsVec3d(0.01, 0.02, 0.03);
     #endif
-    position_hid_to_pc_message new_msg;
+    //position_hid_to_pc_message new_msg;
+    device_to_pc_message new_msg;
+
 //    int err = 0;
     if(sc.receive(new_msg)){ // Error reading, use
         //pc_to_hid_message m;
@@ -736,8 +959,11 @@ fsVec3d HaptikfabrikenInterface::getPos(){
         //sc.send(m);
         //getPos(); // try again
         std::cout << "in error reading\n";
-    } else 
-        msg = new_msg;
+    } else {
+        // TODO: Convert to old message...
+        //msg = new_msg;
+        msg = haptikfabriken::compute_old_msg(new_msg);
+        }
     #ifdef VERBOSE
         std::cout << "returns: " << msg.x_mm << " " << msg.y_mm << " " << msg.z_mm << "\n";
     #endif
@@ -806,13 +1032,19 @@ void HaptikfabrikenInterface::setForce(fsVec3d f){
 #ifdef DUMMY_DEVICE
     return;
 #endif
-    pc_to_hid_message out;
-    out.current_motor_a_mA = short(f.m_x*1000);
-    out.current_motor_b_mA = short(f.m_y*1000);
-    out.current_motor_c_mA = short(f.m_z*1000);
+//    pc_to_hid_message out;
+    pc_to_device_message out;
+    //out.current_motor_a_mA = short(f.m_x*1000);
+    //out.current_motor_b_mA = short(f.m_y*1000);
+    //out.current_motor_c_mA = short(f.m_z*1000);
+    
+    // TODO: compute amps
+    out.ma[0]=0;
+    out.ma[1]=0;
+    out.ma[2]=0;
     sc.send(out);
 }
-
+/*
 void fsRot::identity() {
     double a[3][3] = { {1, 0, 0 },
                        {0, 1, 0 },
@@ -881,7 +1113,7 @@ std::string toString(const haptikfabriken::fsRot &r)
     return ss.str();
 }
 // -----------------------------------------------------------------------------
-
+*/
 
 } // Namespace haptikfabriken
 #endif // UHAPTIKFABRIKEN_H
