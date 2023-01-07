@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 
 // -----------------------------------------------------------------------------
 namespace haptikfabriken {
@@ -369,17 +370,18 @@ public:
             return Kinematics::configuration(data, "aluhaptics_v2 hardcoded");
         }
 
+        // motors are 25x54 mm , most likely 23,4 resistance ~2.7 ohm -> 118752 part no.
         static configuration vintage() {
-            double data[] = { 1, 0.013, 0.010, 0.010,
-                              0.056, 0.138, 0.112,
-                              0.117, 0.077, 0.077,
-                              0.140, 0.000, 0.000, 0.100,
-                              0.0163, 0.0163, 0.0163, 3.0, 4000, 4000, 4000,0,0,0,
-                              5.0, 800.0, 8.0,
-                              0.170, 0.110, 0.051, 0.091, 0,
-                              0,0,0,0,0,0,
-                              0,0,0,0,1,1 };
-            return Kinematics::configuration(data, "vintage hardcoded");
+           double data[] = { 1, 0.013, 0.010, 0.010,
+                             0.000, 0.138, 0.112, //0.097 without attachment, 0.112 last one with thimble or stylus
+                             0.117, 0.077, 0.077,
+                             0.138, 0.000, -0.097, 0.100, // offset xyz and workspace radius //0.157 0 0
+                             0.0234, 0.0234, 0.0234, 3.0, 4000, 4000, 4000,2000,2000,2000,
+                             5.0, 800.0, 8.0,
+                             0.170, 0.110, 0.051, 0.091, 0,
+                             0,0,0,0,0,0,
+                             1,0,1,0,1,0};
+           return Kinematics::configuration(data, "vintage hardcoded");
         }
     };
 

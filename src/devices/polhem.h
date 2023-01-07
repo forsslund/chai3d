@@ -257,7 +257,7 @@ fsVec3d polhemComputeMotorAmps(fsVec3d force, const double theta1,
 
     //debugTorques[0] = t;
     #ifdef USE_DIRECT_COMPUTE_GRAVITY_COMPENSATION
-    if (isnan(t.m_x) || isnan(t.m_y) || isnan(t.m_z))
+    if (std::isnan(t.m_x) || std::isnan(t.m_y) || std::isnan(t.m_z))
     #else
     if (false)//(isnan(t.m_x) || isnan(t.m_y) || isnan(t.m_z))
     #endif
@@ -315,9 +315,9 @@ fsVec3d polhemComputeMotorAmps(fsVec3d force, const double theta1,
             //std::cout << "Jacobian" << i << "T=\n" << toString(MJestG[i].transpose()) << "\n";
             //std::cout << "Fg"<< i << "= " << toString(Fg[i]) << "  JTF = " << toString(tgravcomp[i]) <<"\n";
 
-            if (isnan(tgravcomp[i].m_x) ||
-                isnan(tgravcomp[i].m_y) ||
-                isnan(tgravcomp[i].m_z))
+            if (std::isnan(tgravcomp[i].m_x) ||
+                std::isnan(tgravcomp[i].m_y) ||
+                std::isnan(tgravcomp[i].m_z))
             {
                 // std::cout << "NAN" << std::endl;
 
@@ -349,7 +349,7 @@ double polhemComputeLambda(const double t2, const double t3)
     double q5 = (2. * L1 * sqrt(square(L0 + L1 * cos(t2)) + square(L1) * square(sin(t2))));
     double q6 = ((-square(L0) + square(L1) + square(L0 + L1 * cos(t2)) + square(L1) * square(sin(t2))) / q5);
     double lambda = t2 - acos(q6) - acos(q4) - acos(q2);
-    if (isnan(lambda))
+    if (std::isnan(lambda))
         lambda = 3.141592 / 2;
     return lambda;
 }

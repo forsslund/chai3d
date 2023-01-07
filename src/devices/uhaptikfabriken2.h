@@ -6,10 +6,12 @@
 #include <bitset>
 #include <string>
 //#define DUMMY_DEVICE
-//#define VERBOSE
+#define VERBOSE
 #define USE_MSG_INFO_ROTATION
 
-#define WINDOWS
+//#define WINDOWS
+#define LINUX
+#define VINTAGE
 
 #include "hfabmath.h"
 //#include "haptikfabrikenapi.h"
@@ -257,49 +259,48 @@ int receive_bytes_until_bracket(PORTTYPE port, char *buf)
     int count=0;
     int len=1; // easiset, add more later to speedup?
 #if defined(MACOSX) || defined(LINUX)
-    int r;
-    int retry=0;
-    //char buf[512];
+    int waiting=0;
 
-    //if (len > sizeof(buf) || len < 1) return -1;
-    // non-blocking read mode
+    // Set non-blocking
     fcntl(port, F_SETFL, fcntl(port, F_GETFL) | O_NONBLOCK);
-    while (count < len) {
-        r = read(port, buf + count, len - count);
-//        total_reads++;
-//        printf("read, r = %d, len = %d, count = %d, (retry %d) (total reads %d)\n", r, len, count, retry, total_reads);
-        if (r < 0 && errno != EAGAIN && errno != EINTR) {
-            //std::cout << "Error receiving bytes (errno " << errno << ")\n";
-            return -1;
+    while (true) {
+        int n = read(port, buf + count, 64); // may return -1
+        if (n > 0){
+            count += n;
+            bool found = false;
+            for (unsigned int c = 0; c < count; ++c)
+                if (buf[c] == ']') found = true;
+            if (found) {
+                // flush
+                //while(n>0)
+                //    ReadFile(port, buf++, 1, &n, NULL);
+                successes_before_timeout++;
+
+                break;
+            }
         }
-        else if (r > 0) count += r;
-        else if(retry>500){
-            //std::cout << "no data available right now, must wait\n";
-//            std::cout << "no data available right now, must wait. Errno:  " << errno << ", r: " << r << ", retry: " << retry << ", Total reads: " << total_reads << "\n";
-            // no data available right now, must wait
-            
+        else {
+            if (waiting) {
+#ifdef VERBOSE
+                std::cout << "Linux timeout read... "<< successes_before_timeout << " sucesses before\n";
+#endif
+                successes_before_timeout = 0;
+                break;  // 1 sec timeout
+            }
+
+            // Set blocking
             fd_set fds;
             struct timeval t;
             FD_ZERO(&fds);
             FD_SET(port, &fds);
             t.tv_sec = 0;
             t.tv_usec = 100;
-            r = select(port+1, &fds, NULL, NULL, &t);
-            //printf("select, r = %d\n", r);
-            if (r < 0) {
-               // printf("Select error: %d\n", r);
-                return -1;
-            }
-            if (r == 0){
-//                printf("Timeout! (count: %d)\n", count);
-                return count; // timeout
+            int sr = select(port+1, &fds, NULL, NULL, &t);
+            fcntl(port, F_SETFL, fcntl(port, F_GETFL) & ~O_NONBLOCK);
 
-            }
+            waiting = 1;
         }
-        retry++;
-        if (retry > 2000) return -100; // no input
     }
-    fcntl(port, F_SETFL, fcntl(port, F_GETFL) & ~O_NONBLOCK);
 #elif defined(WINDOWS)
     COMMTIMEOUTS timeout;
     DWORD n;
@@ -457,7 +458,7 @@ void close_port(PORTTYPE port)
 constexpr int model_polhem_2022_raw = 1;
 struct device_to_pc_message {
   int model{1};
-  int enc[6];
+  int enc[6] = {0,0,0,0,0,0};
   int error_code{0};
 
   // Returns number of characters, also writes a trailing \0
@@ -466,16 +467,16 @@ struct device_to_pc_message {
                         model, enc[0], enc[1], enc[2], enc[3], enc[4], enc[5],  error_code);
   }
 
-  // Returns 1 if success, 0 if fail
+  // Returns 0 if success, 1 if fail
   int fromChars(const char *c){
-      return 8 == sscanf(c, "[%d,%d,%d,%d,%d,%d,%d,%d]", 
+      return 8 != sscanf(c, "[%d,%d,%d,%d,%d,%d,%d,%d]",
                               &model, &enc[0], &enc[1], &enc[2], &enc[3], &enc[4], &enc[5], &error_code);
   }
 };
 
 int calls{ 0 };
 struct pc_to_device_message {
-  int ma[3];          // milliamps per motor
+  int ma[3] = {0,0,0};          // milliamps per motor
 
   // Returns number of characters, also writes a trailing \0
   int toChars(char *c) const {
@@ -581,8 +582,6 @@ public:
     void sendWakeupMessage(){pc_to_device_message m; send(m);}
     void open(std::string portname);
     void close();
-    void send(const pc_to_hid_message& msg);
-    int receive(position_hid_to_pc_message& msg);
     void send(const pc_to_device_message& msg);
     int receive(device_to_pc_message& msg);
 private:
@@ -619,17 +618,6 @@ void printBuf(char* buf, std::string str, bool header=true, int max_length=0){
     std::cout << "\" Size (including null character): " << i <<"\n";
 }
 
-void PJRCSerialComm::send(const pc_to_hid_message &msg)
-{
-    char buf[buf_len+1];
-    memset(buf, '\0', buf_len+1);
-    int len = msg.toChars(buf);
-    //std::cout << len;
-    //printBuf(buf, " send   ",false);
-    //std::cout << "len " << len << "\n";
-    transmit_bytes(fd, buf, len);
-}
-
 void PJRCSerialComm::send(const pc_to_device_message &msg)
 {
     char buf[buf_len+1];
@@ -644,58 +632,6 @@ void PJRCSerialComm::send(const pc_to_device_message &msg)
     transmit_bytes(fd, buf, len<16?16:len);
 }
 
-int PJRCSerialComm::receive(position_hid_to_pc_message &msg)
-{
-    constexpr int len=buf_len;
-    char buf[len+1];
-    memset(buf, '\0', len+1);
-    int a = 0;
-    int rr=0;
-    int maxredo=10;
-    for(a=0;a<64;a+=8){
-        rr+=receive_bytes(fd, buf+a, 8);
-        if(buf[a]==0){
-            a-=8; // redo
-            maxredo--;
-            if(!maxredo){
-                printf("Max redo!\n");
-                printBuf(buf, "Buffer before ", false);
-                // Search for \n
-                int aa=0;
-                int bb=0;
-                while(bb=receive_bytes(fd, buf, 1)>0){aa+=bb;}
-                printf("Flushed %d bytes!\n",aa);
-                printBuf(buf, "Buffer after ", false);
-                
-                return 1;
-            }
-        }
-    //printBuf(buf, " receive",false);
-        }
-    
-    if(rr!=buf_len || buf[buf_len-1]!='\n' || buf[buf_len]!='\0'){
-        std::cout << a;
-       // printBuf(buf, " receive",false);
-
-        if(buf[buf_len-1]!='\n'){
-            // Search for \n
-            int aa=0;
-            int bb=0;
-            while(bb=receive_bytes(fd, buf, 1)>0){aa+=bb;}
-            printf("Flushed %d bytes!\n",aa);
-        }
-
-        return 1;
-    }
-    
-    printBuf(buf, " info ",false);
-    msg.fromChars(buf);
-    if(msg.info != last_info){
-        last_info=msg.info;
-//        std::cout << "New info!: " << msg.info << "\n";
-    }
-    return 0;
-}
 
 int PJRCSerialComm::receive(device_to_pc_message &msg)
 {
@@ -706,82 +642,21 @@ int PJRCSerialComm::receive(device_to_pc_message &msg)
 
 #ifdef VERBOSE
     std::cout << "n: " << n << "-->" << std::string(buf) << std::endl;
-    if (n == 0) Sleep(10000);
+    if (n == 0) delay(10);
 #endif
-    msg.fromChars(buf);
-    if (msg.error_code)
+    int parse_error = msg.fromChars(buf);
+    if(parse_error){
+        std::cout << "Parse error! n: " << n << "-->" << std::string(buf) << std::endl;
+#ifdef VERBOSE
+        if (n == 0) delay(10);
+#endif
+    }
+
+    if (msg.error_code && msg.error_code!=7)
         printBuf(buf, "error",false,n);
     return 0; // success
 }
 
-/*
-struct fsVec3d {
-    double m_x,m_y,m_z;
-    fsVec3d(double x, double y, double z):m_x(x),m_y(y),m_z(z){}
-    fsVec3d():m_x(0),m_y(0),m_z(0){}
-    double x(){ return m_x; }
-    double y(){ return m_y; }
-    double z(){ return m_z; }
-    void zero(){m_x=0;m_y=0;m_z=0;}
-    double& operator[](int i) { if(i==0) return m_x; if(i==1) return m_y; return m_z;}
-};
-inline fsVec3d operator*(const double& d, const fsVec3d& v){ return fsVec3d(v.m_x*d,v.m_y*d,v.m_z*d); }
-inline fsVec3d operator*(const fsVec3d& v, const double& d){ return fsVec3d(v.m_x*d,v.m_y*d,v.m_z*d); }
-inline fsVec3d operator+(const fsVec3d& a, const fsVec3d& b){ return fsVec3d(a.m_x+b.m_x, a.m_y+b.m_y, a.m_z+b.m_z); }
-inline fsVec3d operator-(const fsVec3d& a, const fsVec3d& b){ return fsVec3d(a.m_x-b.m_x, a.m_y-b.m_y, a.m_z-b.m_z); }
-
-
-struct fsRot {
-    double m[3][3];
-    fsRot(){identity();}
-    fsRot(double m[3][3]){set(m);}
-    inline void set(double m[3][3]){
-        for(int i=0;i<3;++i)
-            for(int j=0;j<3;++j)
-                this->m[i][j] = m[i][j];
-    }
-    fsRot(std::initializer_list<double> list){   // To initalize with list e.g.
-        auto iter = list.begin();                //    fsRot r{1,2,3,
-        for(int i=0;i<3;++i)                     //            4,5,6,
-            for(int j=0;j<3;++j){                //            7,8,9};
-                m[i][j]=*iter;
-                iter++;
-            }
-    }
-    void identity();
-    void rot_x(double t);
-    void rot_y(double t);
-    void rot_z(double t);
-    fsRot transpose();
-};
-fsVec3d operator*(const fsRot& m, const fsVec3d& v);
-inline fsRot operator*(const fsRot& a, const fsRot& b) {
-    fsRot c;
-    int i,j,m;
-    for(i=0;i<3;i++) {
-      for(j=0;j<3;j++) {
-        c.m[i][j] = 0;
-        for(m=0;m<3;m++)
-          c.m[i][j] += a.m[i][m]*b.m[m][j];
-      }
-    }
-    return c;
-}
-inline fsRot operator*(const fsRot& a, const double& b) {
-    fsRot c;
-    int i,j;
-    for(i=0;i<3;i++) {
-      for(j=0;j<3;j++) {
-         c.m[i][j] = a.m[i][j]*b;
-      }
-    }
-    return c;
-}
-std::string toString(const fsVec3d& r);
-std::string toString(const fsRot& r);
-*/
-// Forward declare
-//class HaptikfabrikenInterface;
 
 class HaptikfabrikenInterface {
 public:
@@ -890,8 +765,13 @@ void HaptikfabrikenInterface::close(){
 
 }
 
+#ifdef VINTAGE
+Kinematics kinematics(Kinematics::configuration::vintage());
+constexpr int enc_home[] = { 0,7700,0,0,0,0 };
+#else
 Kinematics kinematics(Kinematics::configuration::polhem_v3()); // polhem_v3() in haptikfabriken.h!
 constexpr int enc_home[] = { 8312, -10366, 19764, 0, 30, 0 };
+#endif
 
 position_hid_to_pc_message compute_old_msg(const device_to_pc_message& m) {
     position_hid_to_pc_message out;
@@ -961,7 +841,7 @@ fsVec3d HaptikfabrikenInterface::getPos(){
         std::cout << "in error reading\n";
     } else {
         // TODO: Convert to old message...
-        //msg = new_msg;
+        msg_in = new_msg;
         msg = haptikfabriken::compute_old_msg(new_msg);
         }
     #ifdef VERBOSE
@@ -985,21 +865,13 @@ std::bitset<5> HaptikfabrikenInterface::getSwitchesState(){
 
 fsRot HaptikfabrikenInterface::getRot(){
     double tF = 0;
-    // Get BT
-#ifdef VINTAGE
-    int tF_count = msg.info;
-    if (tF_count > 5000) {
-        tF_count -= 5000;
-    }
-    tF = 2 * 3.1415926535897 * tF_count / 2000;
-#endif
 
-#ifdef USE_MSG_INFO_ROTATION
-    int tF_count = msg.info;
+    int tF_count = msg_in.enc[5];
+#ifdef VINTAGE
+    tF = 2 * 3.1415926535897 * tF_count / 2000;
+#else
     tF = 2 * 3.1415926535897 * tF_count / 1024;
 #endif
-
-    //printf("Response %02x %02x n: %d btn: %d\n", resp[0],resp[1], tE_count, btn);
 
     fsRot rA, rC, rD, rE, rF;
     rA.rot_z(msg.tA);
@@ -1039,81 +911,13 @@ void HaptikfabrikenInterface::setForce(fsVec3d f){
     //out.current_motor_c_mA = short(f.m_z*1000);
     
     // TODO: compute amps
-    out.ma[0]=0;
-    out.ma[1]=0;
-    out.ma[2]=0;
+    int base[] = {msg_in.enc[0],msg_in.enc[1],msg_in.enc[2]};
+    fsVec3d a = kinematics.computeMotorAmps(f, base);
+    out.ma[0]=a.m_x*1000;
+    out.ma[1]=a.m_y*1000;
+    out.ma[2]=a.m_z*1000;
     sc.send(out);
 }
-/*
-void fsRot::identity() {
-    double a[3][3] = { {1, 0, 0 },
-                       {0, 1, 0 },
-                       {0, 0, 1 }};
-    set(a);
-}
-void fsRot::rot_x(double t){
-    double a[3][3] = { {1,   0,       0    },
-                       {0, cos(t), -sin(t) },
-                       {0, sin(t), cos(t)  }};
-    set(a);
-}
-void fsRot::rot_y(double t){
-    double a[3][3] = { {cos(t),  0, sin(t) },
-                       {   0,    1,   0    },
-                       {-sin(t), 0, cos(t) }};
-    set(a);
-}
-void fsRot::rot_z(double t){
-    double a[3][3] = { {cos(t), -sin(t), 0 },
-                       {sin(t), cos(t), 0 },
-                       {0, 0, 1 }};
-    set(a);
-}
-
-fsRot fsRot::transpose()
-{
-    double a[3][3] = { {m[0][0], m[1][0], m[2][0] },
-                       {m[0][1], m[1][1], m[2][1] },
-                       {m[0][2], m[1][2], m[2][2] }};
-    fsRot r;
-    r.set(a);
-    return r;
-}
-
-fsVec3d operator*(const fsRot &m, const fsVec3d &v)
-{
-    fsVec3d r;
-
-    r.m_x = m.m[0][0]*v.m_x + m.m[0][1]*v.m_y + m.m[0][2]*v.m_z;
-    r.m_y = m.m[1][0]*v.m_x + m.m[1][1]*v.m_y + m.m[1][2]*v.m_z;
-    r.m_z = m.m[2][0]*v.m_x + m.m[2][1]*v.m_y + m.m[2][2]*v.m_z;
-
-    return r;
-}
-
-std::string toString(const haptikfabriken::fsVec3d &r)
-{
-
-    std::stringstream ss;
-    ss.precision(3);
-    ss.setf(std::ios::fixed);
-    ss << std::setw(6) << r.m_x << ", " << std::setw(6) << r.m_y << ", " << std::setw(6) << r.m_z;
-    return ss.str();
-}
-
-std::string toString(const haptikfabriken::fsRot &r)
-{
-
-    std::stringstream ss;
-    ss.precision(3);
-    ss.setf(std::ios::fixed);
-    ss << std::setw(6) << r.m[0][0] << ", " << std::setw(6) << r.m[0][1] << ", " << std::setw(6) << r.m[0][2] << ",\n";
-    ss << std::setw(6) << r.m[1][0] << ", " << std::setw(6) << r.m[1][1] << ", " << std::setw(6) << r.m[1][2] << ",\n";
-    ss << std::setw(6) << r.m[2][0] << ", " << std::setw(6) << r.m[2][1] << ", " << std::setw(6) << r.m[2][2] << "\n";
-    return ss.str();
-}
-// -----------------------------------------------------------------------------
-*/
 
 } // Namespace haptikfabriken
 #endif // UHAPTIKFABRIKEN_H
