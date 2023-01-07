@@ -6,35 +6,16 @@
 #include <bitset>
 #include <string>
 //#define DUMMY_DEVICE
-#define VERBOSE
-#define USE_MSG_INFO_ROTATION
+//#define VERBOSE
 
 //#define WINDOWS
 #define LINUX
 #define VINTAGE
 
 #include "hfabmath.h"
-//#include "haptikfabrikenapi.h"
-
-/*
-
-1. PJCR serial com "library"
-2. Send/recieve new msg to that
-3. convert to old msg system?
-4. compute pos& force
-
-
-
-*/
-
-
-
-
-// Changelog:
-// 2021-06-18 merged in SocketClient.h
 
 namespace haptikfabriken {
-static const char* version = "0.4 2023-01-06";
+static const char* version = "0.4 2023-01-07";
 constexpr int buf_len = 127;
 }
 
@@ -782,10 +763,6 @@ position_hid_to_pc_message compute_old_msg(const device_to_pc_message& m) {
     // receive encoders, put in counter[0]-[5]
     int counter[] = { m.enc[0],m.enc[1],m.enc[2],m.enc[3],m.enc[4],m.enc[5] };
 
-
-    for (int i = 0; i < 6; ++i)
-        counter[i] += enc_home[i];
-
     // compute a force
     //fsVec3d f(0,0,0);
     const int base[] = { counter[0], counter[1], counter[2] };
@@ -818,6 +795,7 @@ fsVec3d HaptikfabrikenInterface::getPos(){
 
     // Check if device is waiting for a force command (ie. we have called getPos() twice)
     if (get_minus_send_requests>0) {
+        std::cout << "Note: get_minus_send_requests: " << get_minus_send_requests << "\n";
     #ifdef VERBOSE
         std::cout << "Note: get_minus_send_requests: " << get_minus_send_requests << "\n";
     #endif
@@ -840,7 +818,10 @@ fsVec3d HaptikfabrikenInterface::getPos(){
         //getPos(); // try again
         std::cout << "in error reading\n";
     } else {
-        // TODO: Convert to old message...
+        // Add the encoder home position offset
+        for(int i=0;i<6;++i)
+            new_msg.enc[i] += enc_home[i];
+
         msg_in = new_msg;
         msg = haptikfabriken::compute_old_msg(new_msg);
         }
