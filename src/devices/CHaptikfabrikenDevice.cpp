@@ -47,11 +47,11 @@
 //------------------------------------------------------------------------------
 #if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
+#define VINTAGE // if using vintage device
 #ifdef WIN32
 #define WINDOWS
 #endif
-#include "uhaptikfabriken2.h"// Note: with httplib we have to include this before 
-                             // any risk of including windows.h
+#include "../hfabapi/hfab_api.h"
 #include "system/CGlobals.h"
 #include "devices/CHaptikfabrikenDevice.h"
 using namespace haptikfabriken;
@@ -112,8 +112,8 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_deviceNumber = a_deviceNumber;
 
     // name of your device
-    if(m_deviceNumber<10)
-        m_specifications.m_modelName                     = std::string("Polhem ")+haptikfabriken::version + " " + HaptikfabrikenInterface::serialport_names[m_deviceNumber];
+    if (m_deviceNumber < 10)
+        m_specifications.m_modelName = std::string("Polhem ") + haptikfabriken::version;// +" " + HaptikfabrikenInterface::serialport_names[m_deviceNumber];
 
     //--------------------------------------------------------------------------
     // CHARACTERISTICS: (The following values must be positive or equal to zero)
@@ -131,7 +131,7 @@ cHaptikfabrikenDevice::cHaptikfabrikenDevice(unsigned int a_deviceNumber):hfab(0
     m_specifications.m_maxGripperForce                = 3.0;     // [N]
 
     // the maximum closed loop linear stiffness in [N/m] along the x,y,z axis
-    m_specifications.m_maxLinearStiffness             = 1500.0; // [N/m] // 1000 for vintage
+    m_specifications.m_maxLinearStiffness             = 1000.0; // [N/m] // 1000 for vintage
 
     // the maximum amount of angular stiffness
     m_specifications.m_maxAngularStiffness            = 1.0;    // [N*m/Rad]
@@ -283,7 +283,8 @@ bool cHaptikfabrikenDevice::open()
 
     // *** INSERT YOUR CODE HERE ***
     // result = openConnectionToMyDevice();
-    result = hfab->open(haptikfabriken::HaptikfabrikenInterface::serialport_names[m_deviceNumber]) ? C_ERROR : C_SUCCESS;
+    //result = hfab->open(haptikfabriken::HaptikfabrikenInterface::serialport_names[m_deviceNumber]) ? C_ERROR : C_SUCCESS;
+    result = hfab->open("COM12") ? C_ERROR : C_SUCCESS;
 
 
     // update device status
@@ -405,7 +406,8 @@ unsigned int cHaptikfabrikenDevice::getNumDevices()
     ////////////////////////////////////////////////////////////////////////////
 
     // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
-    int numberOfDevices = HaptikfabrikenInterface::findUSBSerialDevices();  // At least set to 1 if a device is available.
+    // TODO: Detect number of devices
+    int numberOfDevices = 1;// HaptikfabrikenInterface::findUSBSerialDevices();  // At least set to 1 if a device is available.
 
 
     // numberOfDevices = getNumberOfDevicesConnectedToTheComputer();

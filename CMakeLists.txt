@@ -156,6 +156,7 @@ include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/theora
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/lib)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/src/Theora)
+include_directories (${PROJECT_SOURCE_DIR}/../hfab_api)
 
 # static library source files
 file (GLOB_RECURSE source RELATIVE ${CHAI3D_SOURCE_DIR} ${CHAI3D_SOURCE_DIR}/src/*.cpp ${CHAI3D_SOURCE_DIR}/src/*.h)
@@ -170,6 +171,9 @@ file (GLOB_RECURSE source_png       RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOU
 file (GLOB_RECURSE source_pugixml   RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/pugixml/*.c      ${PROJECT_SOURCE_DIR}/external/pugixml/*.h)
 file (GLOB_RECURSE source_openal    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/openal/*.c       ${PROJECT_SOURCE_DIR}/external/openal/*.h)
 file (GLOB_RECURSE source_theora    RELATIVE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.c ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.cpp ${PROJECT_SOURCE_DIR}/external/theoraplayer/*.h)
+file (GLOB source_hfab       ${CHAI3D_SOURCE_DIR}/../hfabapi/*.cpp         ${CHAI3D_SOURCE_DIR}/../hfabapi/*.h)
+
+message("source_hfab: ${source_hfab}")
 
 # platform-specific source files adjustments
 if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
@@ -180,7 +184,7 @@ endif ()
 list (REMOVE_ITEM source_theora ${source_theora_exclude})
 
 # group source files (MSVC likes this)
-foreach (FILE ${source} ${source_eigen} ${source_gif} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora})
+foreach (FILE ${source} ${source_eigen} ${source_gif} ${source_hfab} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora})
   get_filename_component (PARENT_DIR "${FILE}" PATH)
   string (REGEX REPLACE "(\\./)?(src|include)/?" "" GROUP "${PARENT_DIR}")
   string (REPLACE "/" "\\" GROUP "${GROUP}")
@@ -191,7 +195,7 @@ endforeach ()
 add_definitions (${PROJECT_DEFINITIONS} -DGLEW_STATIC -DAL_ALEXT_PROTOTYPES -DAL_BUILD_LIBRARY -DAL_LIBTYPE_STATIC -D__THEORA -D_LIB)
 
 # static library
-add_library (chai3d STATIC ${source} ${source_eigen} ${source_gif} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora})
+add_library (chai3d STATIC ${source} ${source_eigen} ${source_gif} ${source_hfab} ${source_glew} ${source_3ds} ${source_jpeg} ${source_png} ${source_pugixml} ${source_openal} ${source_theora})
 
 # library exports
 set (CHAI3D_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external/Eigen" "${PROJECT_SOURCE_DIR}/external/glew/include" "${OPENGL_INCLUDE_DIR}")
