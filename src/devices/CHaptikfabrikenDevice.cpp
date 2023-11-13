@@ -47,7 +47,6 @@
 //------------------------------------------------------------------------------
 #if defined(C_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
 //------------------------------------------------------------------------------
-#define VINTAGE // if using vintage device
 #ifdef WIN32
 #define WINDOWS
 #endif
@@ -246,6 +245,52 @@ cHaptikfabrikenDevice::~cHaptikfabrikenDevice()
     hfab = 0;
 }
 
+#ifdef WIN32
+const wchar_t* registryPath = L"SOFTWARE\\Haptikfabriken\\HfabAPI";
+const wchar_t* valueName = L"ComPort";
+const wchar_t* defaultValue = L"COM1";
+// Function to read the value from the Registry
+std::string ReadRegistryValue() {
+    HKEY hKey;
+    std::wstring wideValue;
+
+    // Open the registry key
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, registryPath, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        // Query the value
+        DWORD dataSize;
+        DWORD dataType;
+
+        if (RegQueryValueExW(hKey, valueName, nullptr, &dataType, nullptr, &dataSize) == ERROR_SUCCESS) {
+            if (dataType == REG_SZ) {
+                wchar_t* buffer = new wchar_t[dataSize / sizeof(wchar_t)];
+
+                if (RegQueryValueExW(hKey, valueName, nullptr, nullptr, reinterpret_cast<LPBYTE>(buffer), &dataSize) == ERROR_SUCCESS) {
+                    wideValue = buffer;
+                }
+
+                delete[] buffer;
+            }
+            // Add more branches for different data types if needed
+
+        }
+        else {
+            std::cerr << "Error querying Registry value." << std::endl;
+        }
+
+        // Close the registry key
+        RegCloseKey(hKey);
+
+    }
+    else {
+        std::cerr << "Error opening Registry key." << std::endl;
+        exit(1);
+    }
+
+    // Convert the wide-character string to narrow-character string
+    std::string narrowValue(wideValue.begin(), wideValue.end());
+    return narrowValue;
+}
+#endif
 
 //==============================================================================
 /*!
@@ -284,8 +329,13 @@ bool cHaptikfabrikenDevice::open()
     // *** INSERT YOUR CODE HERE ***
     // result = openConnectionToMyDevice();
     //result = hfab->open(haptikfabriken::HaptikfabrikenInterface::serialport_names[m_deviceNumber]) ? C_ERROR : C_SUCCESS;
-    result = hfab->open("COM12") ? C_ERROR : C_SUCCESS;
 
+#ifdef WIN32
+    std::string comPort = ReadRegistryValue();
+#else
+    std::string comPort = "/dev/ttyACM0"
+#endif
+    result = hfab->open(comPort) ? C_ERROR : C_SUCCESS;
 
     // update device status
     if (result)
