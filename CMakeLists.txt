@@ -42,7 +42,7 @@
 #
 #set(CMAKE_BUILD_TYPE "Debug")
 
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.5...3.31)
 project (CHAI3D)
 
 # version info
@@ -156,7 +156,7 @@ include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/theora
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/lib)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/src/Theora)
-include_directories (${PROJECT_SOURCE_DIR}/../hfab_api)
+include_directories (${PROJECT_SOURCE_DIR}/../hfabapi)
 
 # static library source files
 file (GLOB_RECURSE source RELATIVE ${CHAI3D_SOURCE_DIR} ${CHAI3D_SOURCE_DIR}/src/*.cpp ${CHAI3D_SOURCE_DIR}/src/*.h)

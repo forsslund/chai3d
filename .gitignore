@@ -15,7 +15,8 @@ CMakeFiles/
 
 CMakeLists\.txt\.user
 
-extras/GLFW/
+extras/GLFW/lib/
+extras/GLFW/*.a
 
 **/Makefile
 

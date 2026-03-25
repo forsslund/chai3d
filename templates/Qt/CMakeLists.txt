@@ -38,7 +38,7 @@
 #  $Rev: 2152 $
 
 
-cmake_minimum_required (VERSION 3.0.0)
+cmake_minimum_required (VERSION 3.5...3.31)
 project (application-QT)
 
 # chai3d dependency
