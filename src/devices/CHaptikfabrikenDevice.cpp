@@ -50,7 +50,7 @@
 #ifdef WIN32
 #define WINDOWS
 #endif
-#include "../hfabapi/hfab_api.h"
+#include "hfab_api.h"
 #include "system/CGlobals.h"
 #include "devices/CHaptikfabrikenDevice.h"
 using namespace haptikfabriken;
@@ -333,7 +333,7 @@ bool cHaptikfabrikenDevice::open()
 #ifdef WIN32
     std::string comPort = ReadRegistryValue();
 #else
-    std::string comPort = "/dev/ttyACM0"
+    std::string comPort = "/dev/ttyACM0";
 #endif
     result = hfab->open(comPort) ? C_ERROR : C_SUCCESS;
 
