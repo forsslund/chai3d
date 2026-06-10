@@ -326,14 +326,16 @@ bool cHaptikfabrikenDevice::open()
 
     bool result = C_ERROR; // this value will need to become "C_SUCCESS" for the device to be marked as ready.
 
-    // *** INSERT YOUR CODE HERE ***
-    // result = openConnectionToMyDevice();
-    //result = hfab->open(haptikfabriken::HaptikfabrikenInterface::serialport_names[m_deviceNumber]) ? C_ERROR : C_SUCCESS;
+    // Refresh detection and open the port that was actually discovered for this
+    // device index, rather than a hardcoded node.
+    HaptikfabrikenInterface::findUSBSerialDevices();
 
 #ifdef WIN32
     std::string comPort = ReadRegistryValue();
 #else
-    std::string comPort = "/dev/ttyACM0";
+    std::string comPort = HaptikfabrikenInterface::serialport_names[m_deviceNumber].empty()
+                              ? std::string("/dev/ttyACM0")
+                              : HaptikfabrikenInterface::serialport_names[m_deviceNumber];
 #endif
     result = hfab->open(comPort) ? C_ERROR : C_SUCCESS;
 
@@ -455,12 +457,11 @@ unsigned int cHaptikfabrikenDevice::getNumDevices()
     */
     ////////////////////////////////////////////////////////////////////////////
 
-    // *** INSERT YOUR CODE HERE, MODIFY CODE below ACCORDINGLY ***
-    // TODO: Detect number of devices
-    int numberOfDevices = 1;// HaptikfabrikenInterface::findUSBSerialDevices();  // At least set to 1 if a device is available.
-
-
-    // numberOfDevices = getNumberOfDevicesConnectedToTheComputer();
+    // Delegate to the canonical hfabapi detection: scans /dev/serial/by-id for a
+    // Teensy (Linux) or probes COM ports (Windows). Returns 0 when nothing is
+    // connected, so no phantom device is reported and open() never hangs on an
+    // absent port.
+    unsigned int numberOfDevices = HaptikfabrikenInterface::findUSBSerialDevices();
 
     return (numberOfDevices);
 }
