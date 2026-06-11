@@ -39,3 +39,4 @@
 
 
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/GLFW)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/console)
