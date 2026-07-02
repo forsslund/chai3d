@@ -57,6 +57,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
   set (OS "win")
   if (${CMAKE_CL_64})
     set (ARCH "x64")
+  elseif (MINGW AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set (ARCH "x64")
   else ()
     set (ARCH "Win32")
   endif ()
@@ -112,12 +114,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES Windows)
       add_definitions (-DWIN32)
     endif ()
 
-  # MinGW compiler
+  # MinGW compiler (including cross-compilation from Linux)
   elseif (MINGW)
-    add_definitions (-DWIN32)
+    add_definitions (-DWIN32 -DWIN64)
     add_definitions (-DHAVE_GCC_DESTRUCTOR)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wno-deprecated -std=c++0x")
-    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -march=native -Wno-deprecated")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -Wno-deprecated -std=c++11")
+    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -march=x86-64 -Wno-deprecated")
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
   endif ()
 
 # Linux global build options
@@ -217,6 +220,25 @@ set (CHAI3D_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 
 # Haptikfabriken uAPI (header only)
 add_definitions(-DC_ENABLE_HAPTIKFABRIKEN_DEVICE_SUPPORT)
+
+#
+# open_phantom: open soft-EPP Phantom backend (libopenphantom)
+#
+# When ON, CHAI3D drives the Phantom Premium 1.5 / 6DOF through the open driver
+# (open forward kinematics, no vendor OpenHaptics stack). The -D below also
+# disables the vendor cPhantomDevice via CGlobals.h, so only one backend claims
+# the parport. Build the library first:  (cd ../../open_phantom && make bin/libopenphantom.a)
+#
+option (USE_OPENPHANTOM "Drive the Phantom via the open soft-EPP driver instead of the vendor OpenHaptics stack" OFF)
+if (USE_OPENPHANTOM)
+  set (OPENPHANTOM_DIR "${PROJECT_SOURCE_DIR}/../../open_phantom" CACHE PATH "open_phantom repository root")
+  message (STATUS "open_phantom backend ENABLED (USE_OPENPHANTOM) — vendor Phantom stack disabled. OPENPHANTOM_DIR=${OPENPHANTOM_DIR}")
+  add_definitions (-DC_ENABLE_OPENPHANTOM_DEVICE_SUPPORT)
+  include_directories (${OPENPHANTOM_DIR}/src)
+  link_directories (${OPENPHANTOM_DIR}/bin)
+  # examples/tools link this so op_* symbols (referenced from inside libchai3d.a) resolve
+  set (CHAI3D_LIBRARIES ${CHAI3D_LIBRARIES} openphantom)
+endif ()
 
 #
 # optional extras

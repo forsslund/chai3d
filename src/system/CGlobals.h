@@ -211,7 +211,12 @@
     //--------------------------------------------------------------------
     #define C_ENABLE_CUSTOM_DEVICE_SUPPORT
     #define C_ENABLE_DELTA_DEVICE_SUPPORT
+    // open_phantom: when the open soft-EPP backend is selected (CMake
+    // -DUSE_OPENPHANTOM=ON passes -DC_ENABLE_OPENPHANTOM_DEVICE_SUPPORT),
+    // disable the vendor OpenHaptics stack so only one backend claims the parport.
+    #if !defined(C_ENABLE_OPENPHANTOM_DEVICE_SUPPORT)
     #define C_ENABLE_PHANTOM_DEVICE_SUPPORT
+    #endif
     #define C_ENABLE_LEAP_DEVICE_SUPPORT
     // #define C_ENABLE_SIXENSE_DEVICE_SUPPORT
 
